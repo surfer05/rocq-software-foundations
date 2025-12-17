@@ -241,3 +241,6 @@ Proof.
   - apply perm3_swap12.
   - apply perm3_swap12.
 Qed.
+
+
+(* USING EVIDENCE IN PROOFS *)
