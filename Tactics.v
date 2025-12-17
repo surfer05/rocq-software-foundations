@@ -213,6 +213,8 @@ Proof.
   apply H.
 Qed.
 
+(* SPECIALIZING HYPOTHESES *)
+
 Theorem specialize_example : forall n,
   (forall m, m*n=0)
   -> n =0.
@@ -235,7 +237,7 @@ Proof.
   apply eq2.
 Qed.
 
-(* Varying the Induction Hypothesis *)
+(* VARYING THE INDUCTION HYPOTHESIS *)
 
 Theorem double_injective_FAILED : forall n m,
   double n = double m ->
@@ -250,7 +252,7 @@ Proof.
     + f_equal.
 Abort.
 
-(* Theorem double_injective : forall n m,
+Theorem double_injective : forall n m,
   double n = double m ->
     n = m.
 Proof.
@@ -258,7 +260,16 @@ Proof.
   - simpl. intros m eq. destruct m as [ | m'] eqn:E.
     + reflexivity.
     + discriminate eq.
-  -  *)
+  - intros m eq.
+    destruct m as [ | m'] eqn:E.
+    + discriminate eq.
+    + f_equal.
+  apply IHn'.
+  simpl in eq. 
+  injection eq as goal.
+  apply goal.
+Qed.
+
 
 
 Theorem eqb_true : forall n m,
@@ -276,9 +287,44 @@ Proof.
     + apply IHn' in H.  rewrite H. reflexivity.
 Qed.
 
+Theorem plus_n_n_injective : forall n m,
+  n + n = m + m ->
+  n = m.
+Proof.
+  intros n. induction n as [| n' IHn'].
+  - intros m H. destruct m as [| m'].
+    + reflexivity.
+    + simpl in H. discriminate H.
+  - intros m H. destruct m as [| m'].
+    + simpl in H. discriminate H.
+    + simpl in H.
+      rewrite <- plus_n_Sm in H.
+      rewrite <- plus_n_Sm in H.
+      injection H as H.
+      apply IHn' in H.
+      rewrite H.
+      reflexivity.
+Qed.
 
-  
-(* Rewriting with conditional statements *)
+Theorem double_injective_take2 : forall n m,
+    double n = double m ->
+    n = m.
+  Proof.
+    intros n m.
+
+    generalize dependent n.
+    induction m as [| m' IHm'].
+    - simpl. intros n eq. destruct n as [| n'] eqn:E.
+      + reflexivity.
+      + discriminate eq.
+    - intros n eq. destruct n as [| n'] eqn:E.
+      + discriminate eq.
+      + f_equal.
+        apply IHm'. injection eq as goal. apply goal. 
+Qed.
+
+
+(* REWRITING WITH CONDITIONAL STATEMENTS *)
 
 Lemma sub_add_leb : forall n m, n <=? m = true -> (m-n)+n = m.
 Proof.
@@ -315,7 +361,7 @@ Proof.
       apply Hlen.
 Qed.
 
-(* Unfolding Definitions *)
+(* UNFOLDING DEFINITIONS *)
 
 Definition square n := n*n.
 
@@ -342,7 +388,6 @@ Proof.
   - simpl. rewrite mult_0_r. reflexivity.
   - simpl. rewrite mul_succ_r. rewrite IHn'. reflexivity.
 Qed.
-
 
 
 Lemma square_mult : forall n m, square (n*m) = square n * square m.
@@ -393,5 +438,81 @@ Proof.
     - reflexivity.
     - destruct (n =? 5) eqn:E2.
       + reflexivity.
-      + reflexivity. Qed.
+      + reflexivity.
+Qed.
+
+Fixpoint split { X Y : Type} (l : list (X*Y)) : (list X)*(list Y) :=
+  match l with 
+    | [] => ([], [])
+    | (x,y)::t => match split t with 
+                  | (lx, ly) => (x :: lx, y :: ly)
+                  end
+  end.
+
+
+Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
+  split l = (l1, l2) ->
+  combine l1 l2 = l.
+Proof.
+  intros X Y l. induction l as [| [x y] l' IHl'].
+  - (* Base Case *)
+    intros l1 l2 H.
+    simpl in H. injection H as H1 H2. subst.
+    reflexivity.
+  - (* Inductive Step *)
+    intros l1 l2 H.
+    simpl in H.
+    destruct (split l') as [lx ly] eqn:Heq.
+    injection H as H1 H2. subst.
+    simpl.
+    rewrite IHl'.
+    + reflexivity.
+    + reflexivity.
+Qed.
+
+Definition sillyfun1 (n : nat) : bool :=
+  if n =? 3 then true
+  else if n =? 5 then true
+  else false.
+
+Theorem sillyfun1_odd_FAILED : forall (n : nat),
+  sillyfun1 n = true ->
+  odd n = true.
+Proof.
+  intros n eq. unfold sillyfun1 in eq.
+  destruct (n =? 3).
+Abort.
+
+Theorem sillyfun1_odd : forall (n : nat),
+  sillyfun1 n = true ->
+  odd n = true.
+Proof.
+  intros n eq. unfold sillyfun1 in eq.
+  destruct (n =? 3) eqn:Heqe3.
+  - apply eqb_true in Heqe3.
+    rewrite -> Heqe3. reflexivity.
+  - destruct (n =? 5) eqn:Heqe5.
+    + apply eqb_true in Heqe5.
+      rewrite -> Heqe5. reflexivity.
+    + discriminate eq.
+Qed.
+
+Theorem bool_fn_applied_thrice :
+  forall (f : bool -> bool) (b : bool),
+  f (f (f b)) = f b.
+Proof.
+  intros f b. destruct b.
+  - destruct (f true) eqn:Hft.
+    + rewrite Hft. rewrite Hft. reflexivity.
+    + destruct (f false) eqn:Hff.
+      * rewrite Hft. reflexivity.
+      * rewrite Hff. reflexivity.
+  - destruct (f false) eqn:Hff.
+    + destruct (f true) eqn:Hft.
+      * rewrite Hft. reflexivity.
+      * rewrite Hff. reflexivity.
+    + rewrite Hff. rewrite Hff. reflexivity.
+Qed.
+
+
 
