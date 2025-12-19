@@ -2,6 +2,8 @@
 Set Warnings "-notation-overridden".
 From LF Require Export Poly.
 
+(* THE APPLY TACTIC *)
+
 Theorem silly1 : forall (n m : nat),
   n = m -> n =m.
 Proof.
@@ -40,7 +42,8 @@ Theorem silly3 : forall (n m : nat),
   m = n.
 Proof.
   intros.
-symmetry. apply H. Qed.
+  symmetry. apply H. 
+Qed.
 
 Theorem rev_exercise1 : forall (l l' : list nat),
   l = rev l' ->
@@ -48,7 +51,7 @@ Theorem rev_exercise1 : forall (l l' : list nat),
 Proof.
 intros. rewrite H. symmetry. apply rev_involutive. Qed.
 
-(* The apply with Tactic *)
+(* THE APPLY WITH TACTIC *)
 
 Example trans_eq_example : forall (a b c d e f : nat ),
   [a;b] = [c;d] ->
@@ -98,7 +101,7 @@ Proof.
 Qed.
 
 
-(* The Injection and discriminate Tactics  *)
+(* THE INJECTION AND DISCRIMINATE TACTICS  *)
 
 Theorem S_injective : forall (n m : nat),
   S n = S m -> 
@@ -194,7 +197,7 @@ Proof.
 Qed.
 
 
-(* Using Tactics on Hypotheses *)
+(* USING TACTICS ON HYPOTHESES *)
 
 Theorem S_inj : forall (n m : nat )(b : bool),
   ((S n) =? (S m)) = b ->
@@ -270,8 +273,6 @@ Proof.
   apply goal.
 Qed.
 
-
-
 Theorem eqb_true : forall n m,
   n =? m = true -> n = m.
 Proof.
@@ -311,7 +312,6 @@ Theorem double_injective_take2 : forall n m,
     n = m.
   Proof.
     intros n m.
-
     generalize dependent n.
     induction m as [| m' IHm'].
     - simpl. intros n eq. destruct n as [| n'] eqn:E.
@@ -516,3 +516,4 @@ Qed.
 
 
 
+(* ADDITIONAL EXERCISES *)
