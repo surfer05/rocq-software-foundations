@@ -2,7 +2,7 @@ Set Warnings "-notation-overridden".
 From LF Require Export Logic.
 From LF Require Export Basics.
 From LF Require Export Lists.
-
+From LF Require Export Poly.
 
 
 (* inductively defined propositions *)
@@ -606,7 +606,7 @@ Theorem empty_relation_is_empty : forall n m, ~ empty_relation n m.
 (* CASE STUDY : REGULAR EXPRESSIONS *)
 
 Inductive reg_exp (T : Type) : Type :=
-  | EmptySet 
+  | EmptySet
   | EmptyStr
   | Char (t : T)
   | App (r1 r2 : reg_exp T)
@@ -615,31 +615,31 @@ Inductive reg_exp (T : Type) : Type :=
 
 Arguments EmptySet {T}.
 Arguments EmptyStr {T}.
-Arguments Char {T}.
-Arguments App {T}.
-Arguments Union {T}.
-Arguments Star {T}.
+Arguments Char {T} _.
+Arguments App {T} _ _.
+Arguments Union {T} _ _.
+Arguments Star {T} _.
 
 Reserved Notation "s =~ re" (at level 80).
 
-Inductive exp_match {T} : list T -> reg_exp T -> Prop := 
+Inductive exp_match {T} : list T -> reg_exp T -> Prop :=
   | MEmpty : [] =~ EmptyStr
   | MChar x : [x] =~ (Char x)
-  | MApp s1 re1 s2 re2 
-              (H1 : s1 =~ re1)
-              (H2 : s2 =~ re2)
-            : (s1 ++ s2) =~ (App re1 re2)
+  | MApp s1 re1 s2 re2
+             (H1 : s1 =~ re1)
+             (H2 : s2 =~ re2)
+           : (s1 ++ s2) =~ (App re1 re2)
   | MUnionL s1 re1 re2
-              (H1 : s1 =~ re1)
-            : s1  =~ (Union re1 re2)
-  | MUnionR s2 re1 re2 
-              (H2 : s2 =~ re2)
-            : s2 =~ (Union  re1 re2)
+                (H1 : s1 =~ re1)
+              : s1 =~ (Union re1 re2)
+  | MUnionR s2 re1 re2
+                (H2 : s2 =~ re2)
+              : s2 =~ (Union re1 re2)
   | MStar0 re : [] =~ (Star re)
-  | MStarApp s1 s2 re 
-              (H1 : s1 =~ re)
-              (H2 : s1 =~ (Star re))
-            : (s1 ++ s2) =~ (Star re)
+  | MStarApp s1 s2 re
+                 (H1 : s1 =~ re)
+                 (H2 : s2 =~ (Star re))
+               : (s1 ++ s2) =~ (Star re)
 
   where "s =~ re" := (exp_match s re).
 
@@ -675,4 +675,17 @@ Proof.
   apply (MApp [3]).
   { apply MChar. }
   apply MEmpty.
+Qed.
+
+
+Lemma MStar1 :
+  forall T s (re : reg_exp T) ,
+    s =~ re ->
+    s =~ Star re.
+Proof.
+  intros T s re H.
+  rewrite <- (app_nil_r _ s).
+  apply MStarApp.
+  - apply H.
+  - apply MStar0.
 Qed.

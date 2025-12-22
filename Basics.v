@@ -114,16 +114,13 @@ Proof. simpl. reflexivity. Qed.
 Example test_nandb4:               (nandb true true) = false.
 Proof. simpl. reflexivity. Qed.
 
+
+
+
 Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool :=
-  match b1 with 
-  | true => match b2 with 
-            | true => match b3 with 
-                      | true => true 
-                      | false => false 
-                      end
-            | false => false 
-            end
-  | false => false 
+  match b1, b2, b3  with 
+  | true, true, true => true
+  | _, _, _ => false
   end.
 
 Example test_andb31:                 (andb3 true true true) = true.
@@ -426,7 +423,6 @@ Proof.
 Theorem plus_id_example : forall n m: nat,
   n = m ->
   n + n = m + m.
-
 Proof. 
   intros n m.
   intros H.
@@ -448,13 +444,13 @@ Check mult_n_O.
 
 Check mult_n_Sm.
 
-    Theorem mult_n_0_m_0 : forall p q : nat,
+Theorem mult_n_0_m_0 : forall p q : nat,
     (p * 0) + (q * 0) = 0.
-  Proof.
-    intros p q.
-    rewrite <- mult_n_O.
-    rewrite <- mult_n_O.
-    reflexivity. Qed.
+Proof.
+  intros p q.
+  rewrite <- mult_n_O.
+  rewrite <- mult_n_O.
+  reflexivity. Qed.
   
 Theorem mult_n_1 : forall p : nat,
   p * 1 = p.
