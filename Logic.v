@@ -826,7 +826,15 @@ Qed.
 
 (* Pending theorems to prove  *)
 (* andb_true_iff *)
-(* orb_true_iff *)
+Theorem orb_true_iff : forall b1 b2,
+  b1 || b2 = true <-> b1 = true \/ b2 = true.
+Proof.
+  intros b1 b2.
+  split.
+  + intros H.
+    destruct b1. left. reflexivity. destruct b2. right. reflexivity. discriminate H.
+  + intros [H1 | H2]. rewrite H1. reflexivity. rewrite H2. destruct b1. reflexivity. reflexivity.
+Qed.
 (* eqb_neq *)
 
 
