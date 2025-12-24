@@ -1,50 +1,23 @@
 Set Warnings "-notation-overridden".
 From LF Require Export Lists.
 
-(* Polymorphism - Abstracting functions over the types of data they manipulate *)
-(* Higher-order functions - treating functions as data *)
-
-
 (* ----- POLYMORPHIC LISTS ------ *)
 
 Inductive boollist : Type :=
   | bool_nil
   | bool_cons ( b : bool) (l : boollist).
 
-(* But this is too tedious, defining new inductive datatype again and again *)
-(* Therefore  *)
-
-(* Coq supports polymorphic inductive type definitions *)
-(* For example : polymorphic list datatype *)
 
 Inductive list ( X : Type) : Type :=
   | nil
   | cons (x : X)(l : list X).
 
 Check list : Type -> Type.
-
-(* list is a function from Types to Types. For any particular type X, the type list X is the Inductively defined set of lists of whose elements are of type X. *)
-
-(* nil and cons are now polymorphic constructors; when we use them, we must provide, as a first argument, the type of the list they are building.
-
-for example : nil nat is the empty list of type nat.
-
-*)
-
 Check (nil nat) : list nat.
-
 Check ( cons nat 3 (nil nat)) : list nat.
-
-(* just note that we are providing the type argument for every single use of list constructor, this is inefficient and we will soon reducie this annotation *)
 Check (cons nat 1 ( cons nat 2 ( nil nat))).
-
-(* nil is not just "empty list", It is a function that takes type X and returns and empty list of that type *)
 Check nil : forall X : Type, list X. 
-
-(* cons takes the type X first, then the element x, the the rest of the list. *)
 Check cons : forall X : Type, X -> list X -> list X.
-
-
 
 (* ---------- Polymorphic versions of all the list-processing functions ------------ *)
 
@@ -415,6 +388,28 @@ Proof.
     reflexivity.
 Qed.
 
+
+Fixpoint flat_map {X Y: Type} (f: X -> list Y) (l: list X) : list Y :=
+  match l with
+  | nil => []
+  | hd :: tl => app (f hd) (flat_map f tl)
+  end.
+
+Example test_flat_map1:
+  flat_map (fun n => [n;n;n]) [1;5;4]
+  = [1; 1; 1; 5; 5; 5; 4; 4; 4].
+Proof. intros. reflexivity. Qed.
+(** [] *)
+
+(** Lists are not the only inductive type for which [map] makes sense.
+    Here is a [map] for the [option] type: *)
+
+Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
+                      : option Y :=
+  match xo with
+  | None => None
+  | Some x => Some (f x)
+  end.
 
 (* Fold *)
 
