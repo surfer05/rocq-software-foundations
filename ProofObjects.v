@@ -212,3 +212,196 @@ Module Props.
 
   Definition some_nat_is_even : exists n, ev n :=
     ex_intro ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
+
+  Definition ev_ev_Sn : ex (fun n => ev (S n)) :=
+    ex_intro (fun n => ev (S n)) 1 (ev_SS 0 ev_0).
+
+  Definition dist_exists_or_term (X : Type) (P Q : X -> Prop) :
+    (exists x, P x \/ Q x) -> (exists x, P x) \/ (exists x, Q x) :=
+    fun H => match H with 
+                | ex_intro _ x Hx =>
+                    match Hx with 
+                    | or_introl HPx => or_introl (ex_intro _ x HPx)
+                    | or_intror HQx => or_intror (ex_intro _ x HQx)
+                    end
+                end.
+
+  Definition ex_match : forall (A : Type) (P Q : A -> Prop),
+    (forall x, P x -> Q x) ->
+    (exists x, P x) -> (exists x, Q x) :=
+        fun A P Q H HP =>
+            match HP with 
+              | ex_intro _ x Hx => ex_intro (fun x => Q x) x (H x Hx)
+            end.
+
+  (* TRUE AND FALSE *)
+
+  Inductive True : Prop :=
+    | I : True.
+  
+  Definition p_implies_true : forall P, P -> True :=
+    fun _ _ => I.
+
+  Inductive False : Prop := .
+
+  Fail 
+    Definition contra : False := 42.
+
+  Definition false_implies_zero_eq_one : False -> 0 = 1 :=
+    fun contra => match contra with end.
+
+  Definition ex_falso_quodlibet' : forall P, False -> P :=
+    fun P False => match False with end.
+
+End Props.
+
+Module EqualityPlayground.
+
+  Inductive eq {X : Type} : X -> X -> Prop :=
+    | eq_refl : forall x, eq x x.
+
+  Notation "x == y" := (eq x y)
+                          (at level 70, no associativity)
+                          : type_scope.
+
+  Lemma four : 2 + 2 == 1 + 3.
+  Proof.
+    apply eq_refl.
+  Qed.
+
+  Definition four' : 2 + 2 == 1 + 3 :=
+    eq_refl 4.
+
+  Definition singleton : forall (X : Type) (x:X), []++[x] == x::[] :=
+    fun (X : Type) (x:X) => eq_refl [x].
+
+  Definition eq_add : forall (n1 n2 : nat), n1 == n2 -> (S n1) == (S n2) :=
+    fun n1 n2 Heq =>
+      match Heq with 
+      | eq_refl n => eq_refl (S n)
+      end.
+
+  Theorem eq_add' : forall (n1 n2 : nat), n1 == n2 -> (S n1) == (S n2).
+  Proof.
+    intros n1 n2 Heq.
+    Fail rewrite Heq.
+    destruct Heq as [n].
+    Fail reflexivity.
+    apply eq_refl.
+  Qed.
+
+  Definition eq_cons : forall (X : Type) (h1 h2 : X ) (t1 t2 : list X),
+    h1 == h2 -> t1 == t2 -> h1 :: t1 == h2 :: t2 :=
+      fun X h1 h2 t1 t2 Heq Teq =>
+          match Heq with 
+          |  eq_refl h  =>
+                match Teq with 
+                | eq_refl t => eq_refl (h :: t)
+                end 
+          end.
+
+  Lemma equality__leibniz_equality : forall (X : Type) (x y : X),
+    x == y -> forall (P : X -> Prop), P x -> P y.
+  Proof.
+    intros.
+    destruct H. apply H0.
+  Qed.
+
+End EqualityPlayground.
+
+(* ROCQ'S TRUSTED COMPUTING BASE *)
+
+Fail Definition or_bogus : forall P Q, P \/ Q -> P :=
+  fun (P Q : Prop) (A : P \/ Q) => 
+    match A with 
+    | or_introl H => H 
+    end.
+
+Fail Fixpoint infinite_loop {X : Type} (n : nat) {struc n} : X :=
+  infinite_loop n.
+
+Fail Definition falso : False := infinite_loop 0.
+
+
+(* MORE EXERCISES *)
+
+Definition and_assoc : forall P Q R : Prop,
+  P /\ (Q /\ R) -> (P /\ Q) /\ R :=
+  fun P Q R H => 
+    match H with 
+    | conj HP ( conj HQ HR) => conj (conj HP HQ) HR
+    end.
+
+Definition or_distributes_over_and : forall P Q R : Prop,
+  P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R) :=
+  fun P Q R =>
+    conj (fun H =>
+            match H with 
+            | or_introl HP => conj (or_introl HP) (or_introl HP)
+            | or_intror (conj HQ HR) => conj (or_intror HQ) (or_intror HR)
+            end)
+         (fun H => 
+            match H with 
+            | conj (or_introl HP) _ => or_introl HP
+            | conj _ (or_introl HP) => or_introl HP
+            | conj (or_intror HQ) (or_intror HR) => or_intror (conj HQ HR)
+            end).
+          
+Definition double_neg : forall P : Prop,
+  P -> ~~P :=
+  fun (P: Prop) (H : P)(HnotP : P -> False) => 
+    HnotP H.
+
+Definition contradiction_implies_anything : forall P Q : Prop,
+  (P /\ ~P) -> Q :=
+    fun (P Q : Prop) contra =>
+      match contra with 
+      | conj HP HNA => match (HNA HP) with end 
+      end.
+
+Definition de_morgan_not_or : forall P Q : Prop,
+  ~(P \/ Q) -> ~P /\ ~Q :=
+  fun (P Q : Prop) (HPQ : P \/ Q -> False ) =>
+      conj (fun HP => HPQ (or_introl HP)) (fun HQ => HPQ (or_intror HQ)).
+
+Definition curry : forall P Q R : Prop,
+  ((P/\Q)->R) -> (P -> (Q -> R)) :=
+    fun P Q R Hpair HP HQ => Hpair (conj HP HQ).
+
+Definition uncurry : forall P Q R : Prop,
+    (P -> (Q -> R)) -> ((P /\ Q) -> R) := fun P Q R f HPQ =>
+       match HPQ with
+       | conj HP HQ => f HP HQ
+       end.
+
+(* PROOF IRRELEVANCE *)
+
+Definition propositional_extensionality : Prop :=
+  forall (P Q : Prop), (P <-> Q) -> P = Q.
+
+Theorem pe_implies_or_eq : 
+  propositional_extensionality -> 
+  forall (P Q : Prop), (P\/Q) = (Q \/ P).
+Proof.
+  intros.
+  apply H.
+  split.
+  - intros. apply or_commut. apply H0.
+  - intros. apply or_commut. apply H0.
+Qed.
+
+Definition proof_irrelevance : Prop :=
+  forall (P : Prop) (pf1 pf2 : P), pf1 = pf2.
+
+Theorem pe_implies_pi : 
+  propositional_extensionality -> proof_irrelevance.
+Proof.
+  intros PE.
+  unfold proof_irrelevance.
+  intros P pf1 pf2.
+  assert ( H : P = True). { apply PE. split. - intros _. apply I. - intros _. apply pf1. }
+  subst P.
+  destruct pf1. 
+  destruct pf2.
+  reflexivity.
+Qed. 
