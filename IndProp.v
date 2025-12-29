@@ -589,7 +589,8 @@ Proof.
      other things need to be generalized... *)
   (* FILL IN HERE *) Admitted.
 
-Inductive total_relation : nat -> nat -> Prop := .
+Inductive total_relation : nat -> nat -> Prop := 
+  | tr_step : forall n m, total_relation n m.
 
 Theorem total_relation_is_total : forall n m, total_relation n m.
   Proof.
