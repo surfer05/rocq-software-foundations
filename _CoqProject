@@ -8,3 +8,5 @@ Logic.v
 IndProp.v
 ProofObjects.v
 IndPrinciples.v
+Maps.v
+Rel.v
