@@ -1,26 +1,5 @@
 (** * Imp: Simple Imperative Programs *)
 
-(** In this chapter, we take a more serious look at how to use Coq as
-    a tool to study other things.  Our case study is a _simple
-    imperative programming language_ called Imp, embodying a tiny core
-    fragment of conventional mainstream languages such as C and Java.
-
-    Here is a familiar mathematical function written in Imp.
-
-       Z := X;
-       Y := 1;
-       while Z <> 0 do
-         Y := Y * Z;
-         Z := Z - 1
-       end
-*)
-
-(** We concentrate here on defining the _syntax_ and _semantics_ of
-    Imp; later, in _Programming Language Foundations_ (_Software
-    Foundations_, volume 2), we develop a theory of _program
-    equivalence_ and introduce _Hoare Logic_, a popular logic for
-    reasoning about imperative programs. *)
-
 Set Warnings "-notation-overridden,-notation-incompatible-prefix".
 From Stdlib Require Import Bool.
 From Stdlib Require Import Init.Nat.
@@ -32,21 +11,7 @@ From Stdlib Require Import Strings.String.
 From LF Require Import Maps.
 Set Default Goal Selector "!".
 
-(* ################################################################# *)
-(** * Arithmetic and Boolean Expressions *)
-
-(** We'll present Imp in three parts: first a core language of
-    _arithmetic and boolean expressions_, then an extension of these
-    with _variables_, and finally a language of _commands_ including
-    assignment, conditionals, sequencing, and loops. *)
-
-(* ================================================================= *)
-(** ** Syntax *)
-
 Module AExp.
-
-(** These two definitions specify the _abstract syntax_ of
-    arithmetic and boolean expressions. *)
 
 Inductive aexp : Type :=
   | ANum (n : nat)
@@ -55,316 +20,114 @@ Inductive aexp : Type :=
   | AMult (a1 a2 : aexp).
 
 Inductive bexp : Type :=
-  | BTrue
-  | BFalse
-  | BEq (a1 a2 : aexp)
+  | BTrue 
+  | BFalse 
+  | BEq (a1 a2 : aexp) 
   | BNeq (a1 a2 : aexp)
-  | BLe (a1 a2 : aexp)
+  | BLe (a1 a2  : aexp)
   | BGt (a1 a2 : aexp)
   | BNot (b : bexp)
   | BAnd (b1 b2 : bexp).
 
-(** In this chapter, we'll mostly elide the translation from the
-    concrete syntax that a programmer would actually write to these
-    abstract syntax trees -- the process that, for example, would
-    translate the string ["1 + 2 * 3"] to the AST
-
-      APlus (ANum 1) (AMult (ANum 2) (ANum 3)).
-
-    The optional chapter [ImpParser] develops a simple lexical
-    analyzer and parser that can perform this translation.  You do not
-    need to understand that chapter to understand this one, but if you
-    haven't already taken a course where these techniques are
-    covered (e.g., a course on compilers) you may want to skim it. *)
-
-(** For comparison, here's a conventional BNF (Backus-Naur Form)
-    grammar defining the same abstract syntax:
-
-    a := nat
-        | a + a
-        | a - a
-        | a * a
-
-    b := true
-        | false
-        | a = a
-        | a <> a
-        | a <= a
-        | a > a
-        | ~ b
-        | b && b
-*)
-
-(** Compared to the Coq version above...
-
-       - The BNF is more informal -- for example, it gives some
-         suggestions about the surface syntax of expressions (like the
-         fact that the addition operation is written with an infix
-         [+]) while leaving other aspects of lexical analysis and
-         parsing (like the relative precedence of [+], [-], and [*],
-         the use of parens to group subexpressions, etc.)
-         unspecified.  Some additional information -- and human
-         intelligence -- would be required to turn this description
-         into a formal definition, e.g., for implementing a compiler.
-
-         The Coq version consistently omits all this information and
-         concentrates on the abstract syntax only.
-
-       - Conversely, the BNF version is lighter and easier to read.
-         Its informality makes it flexible, a big advantage in
-         situations like discussions at the blackboard, where
-         conveying general ideas is more important than nailing down
-         every detail precisely.
-
-         Indeed, there are dozens of BNF-like notations and people
-         switch freely among them -- usually without bothering to say
-         which kind of BNF they're using, because there is no need to:
-         a rough-and-ready informal understanding is all that's
-         important.
-
-    It's good to be comfortable with both sorts of notations: informal
-    ones for communicating between humans and formal ones for carrying
-    out implementations and proofs. *)
-
-(* ================================================================= *)
-(** ** Evaluation *)
-
-(** _Evaluating_ an arithmetic expression produces a number. *)
-
 Fixpoint aeval (a : aexp) : nat :=
-  match a with
+  match a with 
   | ANum n => n
-  | APlus  a1 a2 => (aeval a1) + (aeval a2)
-  | AMinus a1 a2 => (aeval a1) - (aeval a2)
-  | AMult  a1 a2 => (aeval a1) * (aeval a2)
+  | APlus a1 a2 => (aeval a1) + (aeval a2)
+  | AMinus a1 a2 => (aeval a1) - (aeval a2) 
+  | AMult a1 a2 => (aeval a1) * (aeval a2)
   end.
 
-Example test_aeval1:
+Example test_aeval1 : 
   aeval (APlus (ANum 2) (ANum 2)) = 4.
 Proof. reflexivity. Qed.
 
-(** Similarly, evaluating a boolean expression yields a boolean. *)
-
 Fixpoint beval (b : bexp) : bool :=
-  match b with
-  | BTrue       => true
-  | BFalse      => false
-  | BEq a1 a2   => (aeval a1) =? (aeval a2)
-  | BNeq a1 a2  => negb ((aeval a1) =? (aeval a2))
-  | BLe a1 a2   => (aeval a1) <=? (aeval a2)
-  | BGt a1 a2   => negb ((aeval a1) <=? (aeval a2))
-  | BNot b1     => negb (beval b1)
-  | BAnd b1 b2  => andb (beval b1) (beval b2)
+  match b with 
+  | BTrue => true
+  | BFalse => false
+  | BEq a1 a2 => (aeval a1) =? (aeval a2)
+  | BNeq a1 a2 => negb ((aeval a1) =? (aeval a2))
+  | BLe a1 a2 => (aeval a1) <=? (aeval a2)
+  | BGt a1 a2 => negb ((aeval a1) <=? (aeval a2))
+  | BNot b1 => negb (beval b1)
+  | BAnd b1 b2 => andb (beval b1)(beval b2)
   end.
 
-(* ================================================================= *)
-(** ** Optimization *)
-
-(** We haven't defined very much yet, but we can already get
-    some mileage out of the definitions.  Suppose we define a function
-    that takes an arithmetic expression and slightly simplifies it,
-    changing every occurrence of [0 + e] (i.e., [(APlus (ANum 0) e])
-    into just [e]. *)
-
-Fixpoint optimize_0plus (a:aexp) : aexp :=
-  match a with
-  | ANum n => ANum n
+Fixpoint optimize_0plus (a : aexp) : aexp :=
+  match a with 
+  | ANum n => ANum n 
   | APlus (ANum 0) e2 => optimize_0plus e2
-  | APlus  e1 e2 => APlus  (optimize_0plus e1) (optimize_0plus e2)
-  | AMinus e1 e2 => AMinus (optimize_0plus e1) (optimize_0plus e2)
-  | AMult  e1 e2 => AMult  (optimize_0plus e1) (optimize_0plus e2)
+  | APlus e1 e2 => APlus (optimize_0plus e1)(optimize_0plus e2)
+  | AMinus e1 e2 => AMinus (optimize_0plus e1)(optimize_0plus e2)
+  | AMult e1 e2 => AMult (optimize_0plus e1)(optimize_0plus e2)
   end.
 
 (** To gain confidence that our optimization is doing the right
     thing we can test it on some examples and see if the output looks
     OK. *)
 
-Example test_optimize_0plus:
+Example test_optimize_0plus : 
   optimize_0plus (APlus (ANum 2)
                         (APlus (ANum 0)
-                               (APlus (ANum 0) (ANum 1))))
+                        (APlus (ANum 0)(ANum 1))))
   = APlus (ANum 2) (ANum 1).
 Proof. reflexivity. Qed.
 
-(** But if we want to be certain the optimization is correct --
-    that evaluating an optimized expression _always_ gives the same
-    result as the original -- we should prove it! *)
-
-Theorem optimize_0plus_sound: forall a,
+Theorem optimize_0plus_sound : forall a,
   aeval (optimize_0plus a) = aeval a.
 Proof.
-  intros a. induction a.
-  - (* ANum *) reflexivity.
-  - (* APlus *) destruct a1 eqn:Ea1.
-    + (* a1 = ANum n *) destruct n eqn:En.
-      * (* n = 0 *)  simpl. apply IHa2.
-      * (* n <> 0 *) simpl. rewrite IHa2. reflexivity.
-    + (* a1 = APlus a1_1 a1_2 *)
-      simpl. simpl in IHa1. rewrite IHa1.
-      rewrite IHa2. reflexivity.
-    + (* a1 = AMinus a1_1 a1_2 *)
-      simpl. simpl in IHa1. rewrite IHa1.
-      rewrite IHa2. reflexivity.
-    + (* a1 = AMult a1_1 a1_2 *)
-      simpl. simpl in IHa1. rewrite IHa1.
-      rewrite IHa2. reflexivity.
-  - (* AMinus *)
-    simpl. rewrite IHa1. rewrite IHa2. reflexivity.
-  - (* AMult *)
-    simpl. rewrite IHa1. rewrite IHa2. reflexivity.  Qed.
+  intros. induction a.
+  - reflexivity.
+  - destruct a1 eqn:Ea1.
+    + destruct n eqn:En.
+      * simpl. apply IHa2.
+      * simpl. rewrite IHa2. reflexivity.
+    + simpl. simpl in IHa1. rewrite IHa1. rewrite IHa2. reflexivity.
+    + simpl. simpl in IHa1. rewrite IHa1. rewrite IHa2. reflexivity.
+    + simpl. simpl in IHa1. rewrite IHa1. rewrite IHa2. reflexivity.
+  - simpl. rewrite IHa1. rewrite IHa2. reflexivity.
+  - simpl. rewrite IHa1. rewrite IHa2. reflexivity.
+Qed.
 
-(* ################################################################# *)
-(** * Coq Automation *)
-
-(** The amount of repetition in this last proof is a little
-    annoying.  And if either the language of arithmetic expressions or
-    the optimization being proved sound were significantly more
-    complex, it would start to be a real problem.
-
-    So far, we've been doing all our proofs using just a small handful
-    of Coq's tactics and completely ignoring its powerful facilities
-    for constructing parts of proofs automatically.  This section
-    introduces some of these facilities, and we will see more over the
-    next several chapters.  Getting used to them will take some
-    energy -- Coq's automation is a power tool -- but it will allow us
-    to scale up our efforts to more complex definitions and more
-    interesting properties without becoming overwhelmed by boring,
-    repetitive, low-level details. *)
-
-(* ================================================================= *)
-(** ** Tacticals *)
-
-(** _Tacticals_ is Coq's term for tactics that take other tactics as
-    arguments -- "higher-order tactics," if you will.  *)
-
-(* ----------------------------------------------------------------- *)
-(** *** The [try] Tactical *)
-
-(** If [T] is a tactic, then [try T] is a tactic that is just like [T]
-    except that, if [T] fails, [try T] _successfully_ does nothing at
-    all (rather than failing). *)
-Theorem silly1 : forall (P : Prop), P -> P.
+Theorem silly1 :forall (P : Prop), P -> P.
 Proof.
   intros P HP.
-  try reflexivity. (* Plain [reflexivity] would have failed. *)
-  apply HP. (* We can still finish the proof in some other way. *)
+  try reflexivity.
+  apply HP.
 Qed.
 
 Theorem silly2 : forall ae, aeval ae = aeval ae.
 Proof.
-    try reflexivity. (* This just does [reflexivity]. *)
+  try reflexivity.
 Qed.
-
-(** There is not much reason to use [try] in completely manual
-    proofs like these, but it is very useful for doing automated
-    proofs in conjunction with the [;] tactical, which we show
-    next. *)
-
-(* ----------------------------------------------------------------- *)
-(** *** The [;] Tactical (Simple Form) *)
-
-(** In its most common form, the [;] tactical takes two tactics as
-    arguments.  The compound tactic [T;T'] first performs [T] and then
-    performs [T'] on _each subgoal_ generated by [T]. *)
-
-(** For example, consider the following trivial lemma: *)
 
 Lemma foo : forall n, 0 <=? n = true.
 Proof.
   intros.
   destruct n.
-    (* Leaves two subgoals, which are discharged identically...  *)
-    - (* n=0 *) simpl. reflexivity.
-    - (* n=Sn' *) simpl. reflexivity.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
 Qed.
-
-(** We can simplify this proof using the [;] tactical: *)
 
 Lemma foo' : forall n, 0 <=? n = true.
 Proof.
   intros.
-  (* [destruct] the current goal *)
-  destruct n;
-  (* then [simpl] each resulting subgoal *)
-  simpl;
-  (* and do [reflexivity] on each resulting subgoal *)
+  destruct n; 
+  simpl; 
   reflexivity.
 Qed.
 
-(** Using [try] and [;] together, we can get rid of the repetition in
-    the proof that was bothering us a little while ago. *)
-
-Theorem optimize_0plus_sound': forall a,
+Theorem optimize_0plus_sound' : forall a,
   aeval (optimize_0plus a) = aeval a.
 Proof.
   intros a.
-  induction a;
-    (* Most cases follow directly by the IH... *)
+  induction a; 
     try (simpl; rewrite IHa1; rewrite IHa2; reflexivity).
-    (* ... but the remaining cases -- ANum and APlus --
-       are different: *)
-  - (* ANum *) reflexivity.
-  - (* APlus *)
-    destruct a1 eqn:Ea1;
-      (* Again, most cases follow directly by the IH: *)
-      try (simpl; simpl in IHa1; rewrite IHa1;
-           rewrite IHa2; reflexivity).
-    (* The interesting case, on which the [try...]
-       does nothing, is when [e1 = ANum n]. In this
-       case, we have to destruct [n] (to see whether
-       the optimization applies) and rewrite with the
-       induction hypothesis. *)
-    + (* a1 = ANum n *) destruct n eqn:En;
-      simpl; rewrite IHa2; reflexivity.   Qed.
-
-(** Coq experts often use this "[...; try... ]" idiom after a tactic
-    like [induction] to take care of many similar cases all at once.
-    Indeed, this practice has an analog in informal proofs.  For
-    example, here is an informal proof of the optimization theorem
-    that matches the structure of the formal one:
-
-    _Theorem_: For all arithmetic expressions [a],
-
-       aeval (optimize_0plus a) = aeval a.
-
-    _Proof_: By induction on [a].  Most cases follow directly from the
-    IH.  The remaining cases are as follows:
-
-      - Suppose [a = ANum n] for some [n].  We must show
-
-          aeval (optimize_0plus (ANum n)) = aeval (ANum n).
-
-        This is immediate from the definition of [optimize_0plus].
-
-      - Suppose [a = APlus a1 a2] for some [a1] and [a2].  We must
-        show
-
-          aeval (optimize_0plus (APlus a1 a2)) = aeval (APlus a1 a2).
-
-        Consider the possible forms of [a1].  For most of them,
-        [optimize_0plus] simply calls itself recursively for the
-        subexpressions and rebuilds a new expression of the same form
-        as [a1]; in these cases, the result follows directly from the
-        IH.
-
-        The interesting case is when [a1 = ANum n] for some [n].  If
-        [n = 0], then
-
-          optimize_0plus (APlus a1 a2) = optimize_0plus a2
-
-        and the IH for [a2] is exactly what we need.  On the other
-        hand, if [n = S n'] for some [n'], then again [optimize_0plus]
-        simply calls itself recursively, and the result follows from
-        the IH.  [] *)
-
-(** However, this proof can still be improved: the first case (for
-    [a = ANum n]) is very trivial -- even more trivial than the cases
-    that we said simply followed from the IH -- yet we have chosen to
-    write it out in full.  It would be better and clearer to drop it
-    and just say, at the top, "Most cases are either immediate or
-    direct from the IH.  The only interesting case is the one for
-    [APlus]..."  We can make the same improvement in our formal proof
-    too.  Here's how it looks: *)
+  - reflexivity.
+  - destruct a1 eqn:Ea1;
+      try (simpl; simpl in IHa1; rewrite IHa1; rewrite IHa2; reflexivity).
+    + destruct n eqn:En; simpl; rewrite IHa2; reflexivity. 
+Qed.
 
 Theorem optimize_0plus_sound'': forall a,
   aeval (optimize_0plus a) = aeval a.
@@ -380,45 +143,14 @@ Proof.
     destruct a1; try (simpl; simpl in IHa1; rewrite IHa1;
                       rewrite IHa2; reflexivity).
     + (* a1 = ANum n *) destruct n;
-      simpl; rewrite IHa2; reflexivity. Qed.
+      simpl; rewrite IHa2; reflexivity.
+Qed.
 
-(* ----------------------------------------------------------------- *)
-(** *** The [;] Tactical (General Form) *)
-
-(** The [;] tactical also has a more general form than the simple
-    [T;T'] we've seen above.  If [T], [T1], ..., [Tn] are tactics,
-    then
-
-      T; [T1 | T2 | ... | Tn]
-
-    is a tactic that first performs [T] and then performs [T1] on the
-    first subgoal generated by [T], performs [T2] on the second
-    subgoal, etc.
-
-    So [T;T'] is just special notation for the case when all of the
-    [Ti]'s are the same tactic; i.e., [T;T'] is shorthand for:
-
-      T; [T' | T' | ... | T']
-*)
-
-(* ----------------------------------------------------------------- *)
-(** *** The [repeat] Tactical *)
-
-(** The [repeat] tactical takes another tactic and keeps applying this
-    tactic until it fails or until it succeeds but doesn't make any
-    progress.
-
-    Here is an example proving that [10] is in a long list using
-    [repeat]. *)
 
 Theorem In10 : In 10 [1;2;3;4;5;6;7;8;9;10].
 Proof.
   repeat (try (left; reflexivity); right).
 Qed.
-
-(** The tactic [repeat T] never fails: if the tactic [T] doesn't apply
-    to the original goal, then repeat _succeeds_ without changing the
-    goal at all (i.e., it repeats zero times). *)
 
 Theorem In10' : In 10 [1;2;3;4;5;6;7;8;9;10].
 Proof.
@@ -442,123 +174,130 @@ Proof.
   (* repeat rewrite Nat.add_comm. *)
 Admitted.
 
-(** Wait -- did we just write an infinite loop in Coq?!?!
 
-    Sort of.
-
-    While evaluation in Coq's term language, Gallina, is guaranteed to
-    terminate, _tactic_ evaluation is not.  This does not affect Coq's
-    logical consistency, however, since the job of [repeat] and other
-    tactics is to guide Coq in constructing proofs; if the
-    construction process diverges (i.e., it does not terminate), this
-    simply means that we have failed to construct a proof at all, not
-    that we have constructed a bad proof. *)
-
-(** **** Exercise: 3 stars, standard (optimize_0plus_b_sound)
-
-    Since the [optimize_0plus] transformation doesn't change the value
-    of [aexp]s, we should be able to apply it to all the [aexp]s that
-    appear in a [bexp] without changing the [bexp]'s value.  Write a
-    function that performs this transformation on [bexp]s and prove
-    it is sound.  Use the tacticals we've just seen to make the proof
-    as short and elegant as possible. *)
-
-Fixpoint optimize_0plus_b (b : bexp) : bexp
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint optimize_0plus_b (b : bexp) : bexp :=
+  match b with 
+  | BTrue      => BTrue
+  | BFalse     => BFalse
+  | BEq a1 a2  => BEq(optimize_0plus a1)(optimize_0plus a2)
+  | BNeq a1 a2 => BNeq (optimize_0plus a1)(optimize_0plus a2)
+  | BLe a1 a2  => BLe (optimize_0plus a1)(optimize_0plus a2)
+  | BGt a1 a2  => BGt (optimize_0plus a1)(optimize_0plus a2)
+  | BNot b     => BNot (optimize_0plus_b b)
+  | BAnd b1 b2 =>  BAnd (optimize_0plus_b b1) (optimize_0plus_b b2)
+  end.
 
 Example optimize_0plus_b_test1:
   optimize_0plus_b (BNot (BGt (APlus (ANum 0) (ANum 4)) (ANum 8))) =
                    (BNot (BGt (ANum 4) (ANum 8))).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example optimize_0plus_b_test2:
   optimize_0plus_b (BAnd (BLe (APlus (ANum 0) (ANum 4)) (ANum 5)) BTrue) =
                    (BAnd (BLe (ANum 4) (ANum 5)) BTrue).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Theorem optimize_0plus_b_sound : forall b,
   beval (optimize_0plus_b b) = beval b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction b;
+  try ( simpl; repeat (rewrite optimize_0plus_sound); reflexivity).
+  - simpl. rewrite IHb. reflexivity.
+  - simpl. rewrite IHb1. rewrite IHb2. reflexivity.
+Qed.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard, optional (optimize)
+(* (** **** Exercise: 4 stars, standard, optional (optimize) *)  *)
 
-    _Design exercise_: The optimization implemented by our
-    [optimize_0plus] function is only one of many possible
-    optimizations on arithmetic and boolean expressions.  Write a more
-    sophisticated optimizer and prove it correct.  (You will probably
-    find it easiest to start small -- add just a single, simple
-    optimization and its correctness proof -- and build up
-    incrementally to something more interesting.)  *)
+Fixpoint optimize ( a : aexp) : aexp :=
+  match a with 
+  | ANum n => ANum n 
+  | APlus e1 e2 =>
+      match optimize e1 with 
+      | ANum 0 => optimize e2
+      | e1 =>
+        match optimize e2 with 
+        | ANum 0 => e1 
+        | e2 => APlus e1 e2
+        end
+      end 
+  | AMinus e1 e2 => 
+      match optimize e1 with 
+      | ANum 0 => ANum 0
+      | e1 =>
+        match optimize e2 with 
+        | ANum 0 => e1
+        | e2 => AMinus e1 e2 
+        end 
+    end 
+  | AMult e1 e2 => 
+      match optimize e1 with 
+      | ANum 0 => ANum 0 
+      | ANum 1 => optimize e2 
+      | e1 => 
+        match optimize e2 with 
+        | ANum 0 => ANum 0
+        | ANum 1 => e1 
+        | e2 => AMult e1 e2 
+        end 
+      end 
+  end.
 
-(* FILL IN HERE
-
-    [] *)
-
-(* ================================================================= *)
-(** ** Defining New Tactics *)
-
-(** Coq also provides facilities for "programming" in tactic
-    scripts.
-
-    The [Ltac] idiom illustrated below gives a handy way to define
-    "shorthand tactics" that bundle several tactics into a single
-    command.
-
-    Ltac also includes syntactic pattern-matching on the goal and
-    context, as well as general programming facilities.
-
-    It is useful for proof automation and there are several idioms for
-    programming with Ltac. Because it is a language style you might
-    not have seen before, a good reference is the textbook "Certified
-    Programming with dependent types" [CPDT], which is more advanced
-    that what we will need in this course, but is considered by many
-    the best reference for Ltac programming.
-
-    Just for future reference: Coq provides two other ways of defining
-    new tactics.  There is a [Tactic Notation] command that allows
-    defining new tactics with custom control over their concrete
-    syntax. And there is also a low-level API that can be used to
-    build tactics that directly manipulate Coq's internal structures.
-    We will not need either of these for present purposes.
-
-    Here's an example [Ltac] script called [invert]. *)
+(* TODO - COME BACK LATER *)
+Theorem optimize_sound : forall a,
+  aeval (optimize a) = aeval a.
+Proof.
+  intros a.
+  induction a.
+  - reflexivity.
+  - simpl. rewrite <- IHa1. rewrite <- IHa2. destruct (optimize a1);
+    try (destruct (optimize a2); [destruct n; [rewrite add_0_r; reflexivity | reflexivity] | reflexivity | reflexivity | reflexivity]).
+    + destruct n.
+      * reflexivity.
+      * destruct (optimize a2).
+        ** destruct n0.
+           *** rewrite add_0_r. reflexivity.
+           *** reflexivity.
+        ** reflexivity.
+        ** reflexivity.
+        ** reflexivity.
+  - simpl. rewrite <- IHa1. rewrite <- IHa2. destruct (optimize a1);
+    try (destruct (optimize a2); [destruct n; [rewrite sub_0_r; reflexivity | reflexivity] | reflexivity | reflexivity | reflexivity]).
+    + destruct n.
+      * reflexivity.
+      * destruct (optimize a2).
+        ** destruct n0.
+           *** reflexivity.
+           *** reflexivity.
+        ** reflexivity.
+        ** reflexivity.
+        ** reflexivity.
+  - simpl. rewrite <- IHa1. rewrite <- IHa2. destruct (optimize a1);
+    try (destruct (optimize a2); [destruct n; [rewrite mul_0_r; reflexivity | destruct n; [rewrite mul_1_r; reflexivity | reflexivity]] | reflexivity | reflexivity | reflexivity]).
+    + destruct n.
+      * reflexivity.
+      * destruct n.
+        ** simpl. rewrite add_0_r. reflexivity.
+        ** destruct (optimize a2).
+          *** destruct n0.
+              **** rewrite mul_0_r. reflexivity.
+              **** destruct n0.
+                   ***** rewrite mul_1_r. reflexivity.
+                   ***** reflexivity.
+          *** reflexivity.
+          *** reflexivity.
+          *** reflexivity.
+Qed.
 
 Ltac invert H :=
   inversion H; subst; clear H.
-
-(** This defines a new tactic called [invert] that takes a hypothesis
-    [H] as an argument and performs the sequence of commands
-    [inversion H; subst; clear H]. This gives us quick way to do
-    inversion on evidence and constructors, rewrite with the generated
-    equations, and remove the redundant hypothesis at the end. *)
 
 Lemma invert_example1: forall {a b c: nat}, [a ;b] = [a;c] -> b = c.
   intros.
   invert H.
   reflexivity.
 Qed.
-
-(* ================================================================= *)
-(** ** The [lia] Tactic *)
-
-(** The [lia] tactic implements a decision procedure for integer linear
-    arithmetic, a subset of propositional logic and arithmetic.
-
-    If the goal is a universally quantified formula made out of
-
-      - numeric constants, addition ([+] and [S]), subtraction ([-]
-        and [pred]), and multiplication by constants (this is what
-        makes it Presburger arithmetic),
-
-      - equality ([=] and [<>]) and ordering ([<=] and [>]), and
-
-      - the logical connectives [/\], [\/], [~], and [->],
-
-    then invoking [lia] will either solve the goal or fail, meaning
-    that the goal is actually false.  (If the goal is _not_ of this
-    form, [lia] will fail.) *)
 
 Example silly_presburger_example : forall m n o p,
   m + n <= n + o /\ o + 3 = p + 3 ->
@@ -582,39 +321,6 @@ Qed.
 (** (Note the [From Stdlib Require Import Lia.] at the top of
     this file, which makes [lia] available.) *)
 
-(* ================================================================= *)
-(** ** A Few More Handy Tactics *)
-
-(** Finally, here are some miscellaneous tactics that you may find
-    convenient.
-
-     - [clear H]: Delete hypothesis [H] from the context.
-
-     - [subst x]: Given a variable [x], find an assumption [x = e] or
-       [e = x] in the context, replace [x] with [e] throughout the
-       context and current goal, and clear the assumption.
-
-     - [subst]: Substitute away _all_ assumptions of the form [x = e]
-       or [e = x] (where [x] is a variable).
-
-     - [rename... into...]: Change the name of a hypothesis in the
-       proof context.  For example, if the context includes a variable
-       named [x], then [rename x into y] will change all occurrences
-       of [x] to [y].
-
-     - [assumption]: Try to find a hypothesis [H] in the context that
-       exactly matches the goal; if one is found, solve the goal.
-
-     - [contradiction]: Try to find a hypothesis [H] in the context
-       that is logically equivalent to [False].  If one is found,
-       solve the goal.
-
-     - [constructor]: Try to find a constructor [c] (from some
-       [Inductive] definition in the current environment) that can be
-       applied to solve the current goal.  If one is found, behave
-       like [apply c].
-
-    We'll see examples of all of these as we go along. *)
 
 (* ################################################################# *)
 (** * Evaluation as a Relation *)
@@ -2067,24 +1773,3 @@ Proof.
 
 (** [] *)
 End BreakImp.
-
-(** **** Exercise: 4 stars, standard, optional (add_for_loop)
-
-    Add C-style [for] loops to the language of commands, update the
-    [ceval] definition to define the semantics of [for] loops, and add
-    cases for [for] loops as needed so that all the proofs in this
-    file are accepted by Coq.
-
-    A [for] loop should be parameterized by (a) a statement executed
-    initially, (b) a test that is run on each iteration of the loop to
-    determine whether the loop should continue, (c) a statement
-    executed at the end of each loop iteration, and (d) a statement
-    that makes up the body of the loop.  (You don't need to worry
-    about making up a concrete Notation for [for] loops, but feel free
-    to play with this too if you like.) *)
-
-(* FILL IN HERE
-
-    [] *)
-
-(* 2025-08-24 14:26 *)
