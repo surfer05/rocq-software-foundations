@@ -36,6 +36,8 @@ Definition example_map :=
   t_update ( t_update (t_empty false) "foo" true) "bar" true.
 
 Notation "'_' '!->' v" := (t_empty v) (at level 100, right associativity).
+Notation "x '!->' v ';' m" := (t_update m x v)
+                                (at level 100, v constr at level 100, right associativity).
 Example example_empty := (_ !-> false).
 Notation "x '!->' v ';' m" := (t_update m x v) (at level 100, x constr, right associativity).
 
