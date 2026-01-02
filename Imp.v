@@ -1326,6 +1326,7 @@ Proof.
     * subst. apply IHE1_2. assumption.
 Qed.
 
+End BreakImp.
 (* Module ForImp.
 
 Inductive com : Type :=
