@@ -1,15 +1,3 @@
-(** * ImpCEvalFun: An Evaluation Function for Imp *)
-
-(** We saw in the [Imp] chapter how a naive approach to defining a
-    function representing evaluation for Imp runs into difficulties.
-    There, we adopted the solution of changing from a functional to a
-    relational definition of evaluation.  In this optional chapter, we
-    consider strategies for getting the functional approach to
-    work. *)
-
-(* ################################################################# *)
-(** * A Broken Evaluator *)
-
 Set Warnings "-notation-overridden,-notation-incompatible-prefix".
 From Stdlib Require Import Lia.
 From Stdlib Require Import Arith.
@@ -17,9 +5,6 @@ From Stdlib Require Import PeanoNat.
 Import Nat.
 From Stdlib Require Import EqNat.
 From LF Require Import Imp Maps.
-
-(** Here was our first try at an evaluation function for commands,
-    omitting [while]. *)
 
 Fixpoint ceval_step1 (st : state) (c : com) : state :=
   match c with
@@ -37,48 +22,6 @@ Fixpoint ceval_step1 (st : state) (c : com) : state :=
     | <{ while b1 do c1 end }> =>
         st  (* bogus *)
   end.
-
-(** As we remarked in chapter [Imp], in a traditional functional
-    programming language like ML or Haskell we could write the while
-    case as follows:
-
-    | while b1 do c1 end =>
-        if (beval st b1) then
-          ceval_step1 st <{ c1; while b1 do c1 end }>
-        else st
-
-    Coq doesn't accept such a definition ([Error: Cannot guess
-    decreasing argument of fix]) because the function we want to
-    define is not guaranteed to terminate. Indeed, the changed
-    [ceval_step1] function applied to the [loop] program from [Imp.v]
-    would never terminate. Since Coq is not just a functional
-    programming language, but also a consistent logic, any potentially
-    non-terminating function needs to be rejected. Here is an
-    invalid(!) Coq program showing what would go wrong if Coq allowed
-    non-terminating recursive functions:
-
-     Fixpoint loop_false (n : nat) : False := loop_false n.
-
-    That is, propositions like [False] would become
-    provable (e.g., [loop_false 0] would be a proof of [False]), which
-    would be a disaster for Coq's logical consistency.
-
-    Thus, because it doesn't terminate on all inputs, the full version
-    of [ceval_step1] cannot be written in Coq -- at least not without
-    one additional trick... *)
-
-(* ################################################################# *)
-(** * A Step-Indexed Evaluator *)
-
-(** The trick we need is to pass an _additional_ parameter to the
-    evaluation function that tells it how long to run.  Informally, we
-    start the evaluator with a certain amount of "gas" in its tank,
-    and we allow it to run until either it terminates in the usual way
-    _or_ it runs out of gas, at which point we simply stop evaluating
-    and say that the final result is the empty memory.  (We could also
-    say that the result is the current state at the point where the
-    evaluator runs out of gas -- it doesn't really matter because the
-    result is going to be wrong in either case!) *)
 
 Fixpoint ceval_step2 (st : state) (c : com) (i : nat) : state :=
   match i with
@@ -103,21 +46,6 @@ Fixpoint ceval_step2 (st : state) (c : com) (i : nat) : state :=
           else st
     end
   end.
-
-(** _Note_: It is tempting to think that the index [i] here is
-    counting the "number of steps of evaluation."  But if you look
-    closely you'll see that this is not the case: for example, in the
-    rule for sequencing, the same [i] is passed to both recursive
-    calls.  Understanding the exact way that [i] is treated will be
-    important in the proof of [ceval__ceval_step], which is given as
-    an exercise below.
-
-    One thing that is not so nice about this evaluator is that we
-    can't tell, from its result, whether it stopped because the
-    program terminated normally or because it ran out of gas.  Our
-    next version returns an [option state] instead of just a [state],
-    so that we can distinguish between normal and abnormal
-    termination. *)
 
 Fixpoint ceval_step3 (st : state) (c : com) (i : nat)
                     : option state :=
@@ -147,10 +75,6 @@ Fixpoint ceval_step3 (st : state) (c : com) (i : nat)
           else Some st
     end
   end.
-
-(** We can improve the readability of this version by introducing a
-    bit of auxiliary notation to hide the plumbing involved in
-    repeatedly matching against optional states. *)
 
 Notation "'LETOPT' x <== e1 'IN' e2"
    := (match e1 with
@@ -200,24 +124,19 @@ Example example_test_ceval :
         end }>
 
      = Some (2, 0, 4).
-Proof. reflexivity. Qed.
+Proof. simpl. reflexivity. Qed.
 
-(** **** Exercise: 1 star, standard, optional (pup_to_n)
-
-    Write an Imp program that sums the numbers from [1] to
-   [X] (inclusive -- i.e., [1 + 2 + ... + X]) in the variable [Y].  Make
-   sure your solution satisfies the test that follows. *)
-
-Definition pup_to_n : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+  Definition pup_to_n : com
+  := <{ Y := 0;
+        while X > 0 do
+          Y := Y + X;
+          X := X - 1
+        end }>.
 
 Example pup_to_n_1 :
   test_ceval (X !-> 5) pup_to_n
   = Some (0, 15, 0).
-(* FILL IN HERE *) Admitted.
-(*
 Proof. reflexivity. Qed.
-*)
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (peven)
@@ -226,17 +145,32 @@ Proof. reflexivity. Qed.
     sets [Z] to [1] otherwise.  Use [test_ceval] to test your
     program. *)
 
-(* FILL IN HERE
+Definition peven : com
+  := <{ Z := 0;
+        while X > 0 do
+          if Z = 0 then Z := 1 else Z := 0 end;
+          X := X - 1
+        end }>.
 
-    [] *)
+Example peven0 :
+  test_ceval (X !-> 0) peven = Some (0, 0, 0).
+Proof. reflexivity. Qed.
 
-(* ################################################################# *)
-(** * Relational vs. Step-Indexed Evaluation *)
+Example peven1 :
+  test_ceval (X !-> 1) peven = Some (0, 0, 1).
+Proof. reflexivity. Qed.
 
-(** As for arithmetic and boolean expressions, we'd hope that
-    the two alternative definitions of evaluation would actually
-    amount to the same thing in the end.  This section shows that this
-    is the case. *)
+Example peven2 :
+  test_ceval (X !-> 2) peven = Some (0, 0, 0).
+Proof. reflexivity. Qed.
+
+Example peven3 :
+  test_ceval (X !-> 3) peven = Some (0, 0, 1).
+Proof. reflexivity. Qed.
+
+Example peven4 :
+  test_ceval (X !-> 4) peven = Some (0, 0, 0).
+Proof. reflexivity. Qed.
 
 Theorem ceval_step__ceval: forall c st st',
       (exists i, ceval_step st c i = Some st') ->
@@ -291,21 +225,6 @@ Proof.
           injection H1 as H2. rewrite <- H2.
           apply E_WhileFalse. apply Heqr. Qed.
 
-(** **** Exercise: 4 stars, advanced (ceval_step__ceval_inf)
-
-    Write an informal proof of [ceval_step__ceval], following the
-    usual template.  (The template for case analysis on an inductively
-    defined value should look the same as for induction, except that
-    there is no induction hypothesis.)  Make your proof communicate
-    the main ideas to a human reader; do not simply transcribe the
-    steps of the formal proof. *)
-
-(* FILL IN HERE *)
-
-(* Do not modify the following line: *)
-Definition manual_grade_for_ceval_step__ceval_inf : option (nat*string) := None.
-(** [] *)
-
 Theorem ceval_step_more: forall i1 i2 st st' c,
   i1 <= i2 ->
   ceval_step st c i1 = Some st' ->
@@ -350,34 +269,42 @@ induction i1 as [|i1']; intros i2 st st' c Hle Hceval.
       * (* i1'o = None *)
         simpl in Hceval. discriminate Hceval.  Qed.
 
-(** **** Exercise: 3 stars, standard, especially useful (ceval__ceval_step)
 
-    Finish the following proof.  You'll need [ceval_step_more] in a
-    few places, as well as some basic facts about [<=] and [plus]. *)
+Theorem le_plus_l : forall a b,
+        a <= a + b.
+Proof. (* FILL IN HERE *) Admitted.    
 
 Theorem ceval__ceval_step: forall c st st',
-      st =[ c ]=> st' ->
-      exists i, ceval_step st c i = Some st'.
-Proof.
-  intros c st st' Hce.
-  induction Hce.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
-
-Theorem ceval_and_ceval_step_coincide: forall c st st',
-      st =[ c ]=> st'
-  <-> exists i, ceval_step st c i = Some st'.
-Proof.
-  intros c st st'.
-  split. apply ceval__ceval_step. apply ceval_step__ceval.
-Qed.
-
-(* ################################################################# *)
-(** * Determinism of Evaluation Again *)
-
-(** Using the fact that the relational and step-indexed definition of
-    evaluation are the same, we can give a slicker proof that the
-    evaluation _relation_ is deterministic. *)
+        st =[ c ]=> st' ->
+        exists i, ceval_step st c i = Some st'.
+  Proof.
+    intros c st st' Hce.
+    induction Hce.
+    - exists 1. reflexivity.
+    - exists 1. simpl. rewrite H. reflexivity.
+    - destruct IHHce1 as [i IH1]. destruct IHHce2 as [j IH2].
+      exists (S i + j).
+      assert (H: ceval_step st c1 (i + j) = Some st').
+      apply ceval_step_more with (i1:=i). apply le_plus_l. apply IH1.
+      simpl. rewrite H. apply ceval_step_more with (i1:=j).
+      rewrite add_comm. apply le_plus_l. apply IH2.
+    - destruct IHHce as [i IH]. exists (S i). simpl. rewrite H. apply IH.
+    - destruct IHHce as [i IH]. exists (S i). simpl. rewrite H. apply IH.
+    - exists 1. simpl. rewrite H. reflexivity.
+    - destruct IHHce1 as [i IH1]. destruct IHHce2 as [j IH2]. exists (S i + j). simpl. rewrite H.
+      assert (G: ceval_step st c (i + j) = Some st').
+      apply ceval_step_more with (i1:=i). apply le_plus_l. apply IH1.
+      rewrite G. apply ceval_step_more with (i1:=j). rewrite add_comm. apply le_plus_l. apply IH2.
+  Qed.
+  (** [] *)
+  
+  Theorem ceval_and_ceval_step_coincide: forall c st st',
+        st =[ c ]=> st'
+    <-> exists i, ceval_step st c i = Some st'.
+  Proof.
+    intros c st st'.
+    split. apply ceval__ceval_step. apply ceval_step__ceval.
+  Qed.
 
 Theorem ceval_deterministic' : forall c st st1 st2,
      st =[ c ]=> st1 ->
@@ -393,5 +320,3 @@ Proof.
   apply ceval_step_more with (i2 := i1 + i2) in E2.
   rewrite E1 in E2. inversion E2. reflexivity.
   lia. lia.  Qed.
-
-(* 2025-08-24 14:26 *)
