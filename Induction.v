@@ -1,7 +1,6 @@
 From LF Require Export Basics.
 From Stdlib Require Export String.
 
-
 Theorem add_0_r_firsttry: forall n:nat,
   n + 0 = n.
 Proof.
@@ -76,7 +75,6 @@ Proof.
   - simpl. rewrite -> IHn'. rewrite -> plus_n_Sm. simpl. reflexivity.  
 Qed.
 
-
 Theorem eqb_refl : forall n : nat,
   ( n =? n ) = true.
 Proof.
@@ -85,7 +83,6 @@ Proof.
   - simpl. reflexivity.
   - simpl. rewrite -> IHn'. reflexivity.
 Qed.
-
 
 Theorem even_S : forall n : nat,
   even ( S n) = negb ( even n).
@@ -122,7 +119,6 @@ Proof.
   - reflexivity.
   - rewrite add_comm. reflexivity.
 Qed.
-
 
 Theorem add_shuffle3 : forall n m p : nat,
   n + (m + p) = m + (n + p).
@@ -168,7 +164,6 @@ Proof.
   - simpl. rewrite mult_0_r. reflexivity.
   - simpl. rewrite mul_succ_r. rewrite IHn'. reflexivity.
 Qed.
-
 
 Theorem leb_refl : forall n : nat,
   ( n <=? n) = true.
@@ -229,8 +224,6 @@ Proof.
   - simpl. reflexivity. 
 Qed.  
 
-
-
 Theorem mult_plus_distr_r : forall n m p : nat,
   (n + m)*p = (n*p)+(m*p).
 Proof.
@@ -239,7 +232,6 @@ Proof.
   - simpl. reflexivity.
   - simpl. rewrite IHn'. rewrite add_assoc. reflexivity.
 Qed.
-
 
 Theorem mult_assoc : forall n m p: nat, 
   n*(m*p) = (n*m)*p.
@@ -269,13 +261,10 @@ Theorem bin_to_nat_pres_incr : forall b : bin,
 Proof.
   intros b.
   induction b as [| n' IHn' | n' IHn'].
-  
   - simpl.
     reflexivity.
-    
   - simpl.
     reflexivity.
-
   - simpl.
     rewrite IHn'.
     simpl.
@@ -299,7 +288,6 @@ Proof. simpl. reflexivity. Qed.
 Example test_nat_to_bin3 : (nat_to_bin O) = Z.
 Proof. simpl. reflexivity. Qed.
 
-
 Theorem nat_bin_nat : forall n, bin_to_nat (nat_to_bin n) = n.
 Proof.
   intros n.
@@ -311,7 +299,6 @@ Proof.
     rewrite IHn'.
     reflexivity.
 Qed.
-
 
 Lemma double_incr : forall n : nat, double ( S n) = S ( S ( double n) ).
 Proof.
@@ -339,26 +326,55 @@ Proof.
   - simpl. reflexivity.
 Qed.
 
-Fixpoint normalize ( b: bin) : bin :=
-  match b with
-  | Z => Z 
-  | B1 n' => B1 ( normalize n')
-  | B0 n' => double_bin(normalize n')
-  end.
+Fixpoint normalize (b:bin) : bin
+  := match b with
+     | Z     => Z
+     | B0 b' => double_bin (normalize b')
+     | B1 b' => incr (double_bin (normalize b'))
+     end.
 
-Example normalize_zero : normalize ( B0 Z) = Z.
+Example test_normalize0_1 : normalize Z = Z.
+Proof. reflexivity. Qed.
+
+Example test_normalize0_2 : normalize (B0 Z) = Z.
+Proof. reflexivity. Qed.
+
+Example test_normalize0_3 : normalize (B0 (B0 Z)) = Z.
+Proof. reflexivity. Qed.
+
+Example test_normalize0_4 : normalize (B0 (B0 (B0 Z))) = Z.
+Proof. reflexivity. Qed.
+
+Example test_normalize1 : bin_to_nat (normalize (B1 Z)) = 1.
+Proof. reflexivity. Qed.
+
+Example test_normalize2 : bin_to_nat (normalize (B0 (B1 Z))) = 2.
+Proof. reflexivity. Qed.
+
+Example test_normalize3 : bin_to_nat (normalize (B1 (B1 Z))) = 3.
+Proof. reflexivity. Qed.
+
+Example test_normalize4 : bin_to_nat (normalize (B0 (B0 (B1 Z)))) = 4.
+Proof. reflexivity. Qed.
+
+Lemma nat_to_bin_double : forall n : nat , 
+  nat_to_bin (double n) = double_bin (nat_to_bin n).
 Proof.
-  simpl. reflexivity.
+  intros n.
+  induction n.
+  - simpl. reflexivity. 
+  - simpl. rewrite -> double_incr_bin. rewrite <- IHn. reflexivity.
 Qed.
 
-Example normalize_zero_deep : normalize (B0 (B0 Z)) = Z.
+Theorem bin_nat_bin : forall b, nat_to_bin (bin_to_nat b) = normalize b.
 Proof.
-  simpl. reflexivity.
+  intros b.
+  induction b as [ | b' | b'].
+  - simpl. reflexivity.
+  - simpl. rewrite <- double_plus. rewrite nat_to_bin_double. rewrite IHb'. reflexivity.
+  - simpl. rewrite <- double_plus. rewrite nat_to_bin_double. rewrite IHb'. reflexivity.
 Qed.
-
-Example normalize_no_op : normalize (B1 (B0 (B1 Z))) = B1 (B0 (B1 Z)).
-Proof.
-  simpl. reflexivity.
-Qed.
+  
+  
 
 
