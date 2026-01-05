@@ -1,6 +1,5 @@
 From LF Require Export Induction.
 From LF Require Export Basics.
-
 From Stdlib Require Import String.
 
 Module NatList.
@@ -81,8 +80,6 @@ Module NatList.
   Definition mylist3 := [1;2;3].
 
   Notation "x + y" := (plus x y) (at level 50, left associativity).
-
-
   (* Functions for Constructing and Manipulating lists. *)
 
   (* REPEAT *)
@@ -142,7 +139,6 @@ Module NatList.
   Example test_tl2 : tl [1;2;3] = [2;3].
   Proof. reflexivity. Qed.
 
-
   Fixpoint nonzeros (l:natlist) : natlist :=
   match l with
     | nil => nil
@@ -172,7 +168,6 @@ Module NatList.
   Proof. reflexivity.  Qed.
   Example test_countoddmembers3:    countoddmembers nil = 0.
   Proof. reflexivity.  Qed.
-  
   
   Fixpoint alternate (l1 l2 : natlist) : natlist :=
     match l1 with
@@ -442,6 +437,114 @@ Module NatList.
       rewrite -> IHl'.
       reflexivity.
   Qed.
+
+Theorem app_assoc4 : forall l1 l2 l3 l4 : natlist,
+  l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
+Proof.
+  intros l1 l2 l3 l4.
+  rewrite -> app_assoc.
+  rewrite -> app_assoc.
+  reflexivity.
+Qed.
+
+Lemma nonzeros_app : forall l1 l2 : natlist,
+  nonzeros (l1 ++ l2) = (nonzeros l1) ++ (nonzeros l2).
+Proof.
+  intros l1 l2.
+  induction l1 as [| n1 l1'].
+  - simpl. reflexivity.
+  - destruct n1 as [|n1'].
+    + simpl.
+      rewrite <- IHl1'.
+      reflexivity.
+    + simpl.
+      rewrite <- IHl1'.
+      reflexivity.
+Qed.
+
+Fixpoint eqblist (l1 l2 : natlist) : bool
+  := match l1, l2 with
+     | n1 :: l1', n2 :: l2' => if n1 =? n2 then eqblist l1' l2' else false
+     | nil, nil => true
+     | _, _ => false
+     end.
+
+Example test_eqblist1 :
+  (eqblist nil nil = true).
+Proof. reflexivity. Qed.
+
+Example test_eqblist2 :
+  eqblist [1;2;3] [1;2;3] = true.
+Proof. reflexivity. Qed.
+
+Example test_eqblist3 :
+  eqblist [1;2;3] [1;2;4] = false.
+Proof. reflexivity. Qed.
+
+  Theorem eqb_refl : forall n : nat, n =? n = true.
+    Proof.
+      intros n.
+      induction n as [| n' IHn'].
+      - simpl. reflexivity.
+      - simpl.
+        rewrite -> IHn'.
+        reflexivity.
+    Qed.
+
+Theorem eqblist_refl : forall l:natlist,
+  true = eqblist l l.
+Proof.
+  induction l as [| n l' IHl'].
+  - reflexivity.
+  - simpl. rewrite -> eqb_refl. rewrite <- IHl'. reflexivity.
+Qed.
+
+Theorem count_member_nonzero : forall (s : bag),
+  1 <=? (count 1 (1 :: s)) = true.
+Proof.
+  reflexivity. Qed.
+
+Theorem leb_n_Sn : forall n,
+  n <=? (S n) = true.
+Proof.
+  intros n. induction n as [| n' IHn'].
+  - (* 0 *)
+    simpl.  reflexivity.
+  - (* S n' *)
+    simpl.  rewrite IHn'.  reflexivity.  Qed.
+
+Theorem remove_does_not_increase_count: forall (s : bag),
+  (count 0 (remove_one 0 s)) <=? (count 0 s) = true.
+Proof.
+  induction s as [| n s'].
+  - simpl. reflexivity.
+  - simpl.
+    destruct n as [|n'].
+    + simpl. rewrite -> leb_n_Sn. reflexivity.
+    + simpl. rewrite -> IHs'. reflexivity.
+Qed.
+
+Theorem bag_count_sum : forall (s1 s2 : bag), forall n : nat,
+  count n (sum s1 s2) = (count n s1) + (count n s2).
+  intros s1 s2 n.
+  induction s1 as [| n' s1'].
+  - reflexivity.
+  - simpl.
+    destruct (n =? n').
+    + simpl. rewrite <- IHs1'. reflexivity.
+    + rewrite <- IHs1'. reflexivity.
+Qed.
+
+Theorem involution_injective : forall (f : nat -> nat),
+    (forall n : nat, n = f (f n)) -> (forall n1 n2 : nat, f n1 = f n2 -> n1 = n2).
+Proof.
+  intros f I n1 n2 H.
+  rewrite -> I.
+  rewrite <- H.
+  rewrite <- I.
+  reflexivity.
+Qed.
+
   
   Theorem rev_injective : forall l1 l2 : natlist,
     rev l1 = rev l2 -> l1 = l2.
@@ -508,19 +611,14 @@ Module NatList.
   Example test_hd_error3 : hd_error [5;6] = Some 5.
   Proof. reflexivity. Qed.
 
-  (* Theorem option_elim_hd : forall (l : natlist) (default :nat),
+  Theorem option_elim_hd : forall (l:natlist) (default:nat),
     hd default l = option_elim default (hd_error l).
-  Proof. *)
+  Proof.
+    intros l default.
+    destruct l.
+    reflexivity. reflexivity.  Qed.
 
-  Theorem eqb_refl : forall n : nat, n =? n = true.
-    Proof.
-      intros n.
-      induction n as [| n' IHn'].
-      - simpl. reflexivity.
-      - simpl.
-        rewrite -> IHn'.
-        reflexivity.
-    Qed.
+
 
 (* -------- PARTIAL MAPS ---------- *)
 
