@@ -114,9 +114,6 @@ Proof. simpl. reflexivity. Qed.
 Example test_nandb4:               (nandb true true) = false.
 Proof. simpl. reflexivity. Qed.
 
-
-
-
 Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool :=
   match b1, b2, b3  with 
   | true, true, true => true
@@ -253,8 +250,6 @@ Fixpoint even( n : nat ) : bool :=
   | S ( S n') => even n'
   end.
 
-
-
 Definition odd ( n : nat ) : bool :=
   negb ( even n).
 
@@ -301,7 +296,7 @@ Module NatPlayground2.
   Fixpoint exp ( base power : nat ) : nat :=
     match power with 
     | O => S O 
-    | S p => mult base ( exp base p)
+    | S power => mult base ( exp base power)
     end.
   
   Example test_exp1 : (exp 3 5)  = 243.
