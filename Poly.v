@@ -47,12 +47,9 @@ Module MumbleGrumble.
     | e ( x : X).
 
     (* 2,3,4,5 are well-typed elements : from the book quiz *)
-  
 End MumbleGrumble.
 
-
 (* Type Annotation Inference *)
-
 Fixpoint repeat' X x count : list X :=
   match count with 
     | 0 => nil X 
@@ -73,7 +70,6 @@ Fixpoint repeat'' X x count : list X :=
 
 Definition list123' :=
   cons _ 1 ( cons _ 2 (cons _ 3 ( nil _))).
-
 
 (* Implicit Arguments *)
 
@@ -116,7 +112,6 @@ Proof. reflexivity. Qed.
 
 Example test_length1 : length (cons 1 ( cons 2(cons 3 nil))) = 3.
 Proof. reflexivity. Qed.
-
 
 (* Supplying Type Arguments Explicitly *)
 Fail Definition mynil := nil.
@@ -188,7 +183,6 @@ Proof.
     reflexivity.
 Qed.
 
-
 (* ------ Polymorphic Pairs -------- *)
 
 Inductive prod (X Y : Type) : Type :=
@@ -241,7 +235,6 @@ Module OptionPlayground.
 
 End OptionPlayground.
 
-
 Fixpoint nth_error {X:Type} (l : list X)(n : nat) : option X :=
   match l with 
     | nil => None
@@ -270,8 +263,6 @@ Proof. reflexivity. Qed.
 Example test_hd_error2 : hd_error [[1];[2]] = Some [1].
 Proof. reflexivity. Qed.
   
-
-
 (* -------- FUNCTIONS AS DATA ------------ *)
 
 Definition doit3times {X : Type} (f : X -> X) (n : X) : X :=
@@ -345,7 +336,6 @@ Proof. simpl. reflexivity. Qed.
 Example test_partition2: partition (fun x => false) [5;9;0] = ([], [5;9;0]).
 Proof. simpl. reflexivity. Qed.
 
-
 Fixpoint map {X Y : Type} (f : X -> Y) ( l : list X) : list Y :=
   match l with 
     | [] => []
@@ -355,7 +345,6 @@ Fixpoint map {X Y : Type} (f : X -> Y) ( l : list X) : list Y :=
 Example test_map1 : map ( fun x => plus 3 x) [2;0;2] = [5;3;5].
 Proof. reflexivity. Qed.
 
-
 Example test_map2 : 
   map odd [2;1;2;5] = [false; true; false; true].
 Proof. reflexivity. Qed.
@@ -364,7 +353,6 @@ Example test_map3:
   map (fun n=> [even n;odd n]) [2;1;2;5]
     = [[true;false];[false;true];[true;false];[false;true]].
 Proof. reflexivity. Qed.
-  
 
 Theorem map_app : forall (X Y : Type) ( f : X -> Y) ( l1 l2 : list X),
   map f ( l1 ++ l2) = map f l1 ++ map f l2. 
@@ -388,7 +376,6 @@ Proof.
     reflexivity.
 Qed.
 
-
 Fixpoint flat_map {X Y: Type} (f: X -> list Y) (l: list X) : list Y :=
   match l with
   | nil => []
@@ -399,10 +386,6 @@ Example test_flat_map1:
   flat_map (fun n => [n;n;n]) [1;5;4]
   = [1; 1; 1; 5; 5; 5; 4; 4; 4].
 Proof. intros. reflexivity. Qed.
-(** [] *)
-
-(** Lists are not the only inductive type for which [map] makes sense.
-    Here is a [map] for the [option] type: *)
 
 Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
                       : option Y :=
@@ -412,7 +395,6 @@ Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
   end.
 
 (* Fold *)
-
 Fixpoint fold {X Y : Type} (f : X -> Y -> Y) (l : list X) (b : Y) : Y :=
   match l with 
     | nil => b 
@@ -437,9 +419,10 @@ Example foldexample4 :
   fold (fun l n => length l + n) [[1];[];[2;3;2];[4]] 0 = 5.
 Proof. reflexivity. Qed.
 
+Definition flat_map' {X : Type} (l : list (list X)) : list X
+  := fold app l [].
 
 (* Functions that construct Functions *)
-
 Definition constfun {X : Type} (x : X) : nat -> X :=
   fun ( k : nat) => x.
   
@@ -453,7 +436,6 @@ Check (constfun [5]).
 
 Example constfun_example2 : (constfun 5) 99 = 5.
 Proof. reflexivity. Qed.
-
 
 Check plus.
 Definition plus3 := plus 3.
@@ -497,32 +479,31 @@ Module Exercises.
     - simpl. rewrite IHl'. reflexivity.
   Qed.  
 
-  Definition prod_curry { X Y Z : Type }
-    ( f : X * Y -> Z) (x : X) ( y : Y) : Z := f (x, y).
+Definition prod_curry {X Y Z : Type}
+  (f : X * Y -> Z) (x : X) (y : Y) : Z := f (x, y).
 
-  Definition prod_uncurry {X Y Z : Type}  
-    (f : X -> Y -> Z) (p : X*Y) : Z := 
-    match p with 
-    | (x,y) => f x y 
-    end.
+Definition prod_uncurry {X Y Z : Type}
+  (f : X -> Y -> Z) (p : X * Y) : Z
+  := f (fst p) (snd p).
 
+Example test_map1': map (plus 3) [2;0;2] = [5;3;5].
+Proof. reflexivity. Qed.
 
-  Theorem uncurry_curry : forall (X Y Z : Type)
+Check @prod_curry.
+Check @prod_uncurry.
+
+Theorem uncurry_curry : forall (X Y Z : Type)
                         (f : X -> Y -> Z)
                         x y,
   prod_curry (prod_uncurry f) x y = f x y.
 Proof.
-  reflexivity.
-Qed.
+  reflexivity. Qed.
 
 Theorem curry_uncurry : forall (X Y Z : Type)
                         (f : (X * Y) -> Z) (p : X * Y),
   prod_uncurry (prod_curry f) p = f p.
 Proof.
-  intros X Y Z f p.
-  destruct p as [x y].
-  reflexivity.
-Qed. 
+  destruct p. reflexivity. Qed.
 
 (* ------- CHURCH NUMERALS ------- *)
 (* A natural number n can be represented as a function that takes a function as a parameter and returns f iterated n times. *)
@@ -607,7 +588,6 @@ Module Church.
   
   Example exp_3 : exp three two = plus (mult two (mult two two)) one.
   Proof. reflexivity. Qed.
-  
   
   End Church.
 End Exercises.
