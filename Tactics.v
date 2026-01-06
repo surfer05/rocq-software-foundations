@@ -1,9 +1,7 @@
-
 Set Warnings "-notation-overridden".
 From LF Require Export Poly.
 
 (* THE APPLY TACTIC *)
-
 Theorem silly1 : forall (n m : nat),
   n = m -> n =m.
 Proof.
@@ -51,8 +49,10 @@ Theorem rev_exercise1 : forall (l l' : list nat),
 Proof.
 intros. rewrite H. symmetry. apply rev_involutive. Qed.
 
-(* THE APPLY WITH TACTIC *)
+(* [apply] cannot be applied instead of [rewrite <- H], *)
+(* should use [symmetry] before. *)
 
+(* THE APPLY WITH TACTIC *)
 Example trans_eq_example : forall (a b c d e f : nat ),
   [a;b] = [c;d] ->
   [c;d] = [e;f] ->
@@ -100,9 +100,7 @@ Proof.
   apply H0. apply H.
 Qed.
 
-
 (* THE INJECTION AND DISCRIMINATE TACTICS  *)
-
 Theorem S_injective : forall (n m : nat),
   S n = S m -> 
   n = m.
@@ -195,7 +193,6 @@ Theorem eq_implies_succ_equal' : forall ( n m : nat),
 Proof.
   intros n m H. f_equal. apply H. 
 Qed.
-
 
 (* USING TACTICS ON HYPOTHESES *)
 
@@ -323,7 +320,6 @@ Theorem double_injective_take2 : forall n m,
         apply IHm'. injection eq as goal. apply goal. 
 Qed.
 
-
 (* REWRITING WITH CONDITIONAL STATEMENTS *)
 
 Lemma sub_add_leb : forall n m, n <=? m = true -> (m-n)+n = m.
@@ -365,7 +361,6 @@ Qed.
 
 Definition square n := n*n.
 
-
 Lemma mul_succ_r : forall n m : nat,
   n * (S m) = n + n * m.
 Proof.
@@ -388,7 +383,6 @@ Proof.
   - simpl. rewrite mult_0_r. reflexivity.
   - simpl. rewrite mul_succ_r. rewrite IHn'. reflexivity.
 Qed.
-
 
 Lemma square_mult : forall n m, square (n*m) = square n * square m.
 Proof.
@@ -448,7 +442,6 @@ Fixpoint split { X Y : Type} (l : list (X*Y)) : (list X)*(list Y) :=
                   | (lx, ly) => (x :: lx, y :: ly)
                   end
   end.
-
 
 Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
@@ -514,6 +507,120 @@ Proof.
     + rewrite Hff. rewrite Hff. reflexivity.
 Qed.
 
-
-
 (* ADDITIONAL EXERCISES *)
+
+Theorem eqb_refl : forall n : nat,
+  ( n =? n ) = true.
+Proof.
+  intros n.
+  induction n as [ | n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite -> IHn'. reflexivity.
+Qed.
+
+Theorem eqb_sym : forall (n m : nat),
+  (n =? m) = (m =? n).
+Proof.
+  intros n m.
+  destruct (n =? m) eqn:E.
+  + (* true *)
+    symmetry. apply eqb_true in E. rewrite -> E. apply eqb_refl.
+  + (* false *)
+    generalize dependent m.
+    induction n.
+    - destruct m.
+      * intros E. discriminate E.
+      * reflexivity.
+    - destruct m.
+      * reflexivity.
+      * intros E. simpl in E. apply IHn in E. simpl. rewrite <- E. reflexivity.
+Qed.
+
+Theorem eqb_trans : forall n m p,
+  n =? m = true ->
+  m =? p = true ->
+  n =? p = true.
+Proof.
+  intros n m p eq1 eq2.
+  apply eqb_true in eq1. apply eqb_true in eq2.
+  rewrite -> eq1. rewrite <- eq2.
+  apply eqb_refl.
+Qed.
+
+Definition split_combine_statement : Prop
+  := forall X Y (l1 : list X) (l2 : list Y), length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
+
+Theorem split_combine : split_combine_statement.
+Proof.
+  intros X Y.
+  induction l1 as [| x].
+  + intros l2 H.
+    destruct l2 as [| y].
+    - reflexivity.
+    - discriminate H.
+  + intros l2 H. destruct l2 as [| y].
+    - discriminate H.
+    - injection H as H. apply IHl1 in H.
+      simpl. rewrite -> H.
+      reflexivity.
+Qed.
+
+Theorem filter_exercise : forall (X : Type) (test : X -> bool)
+                                 (x : X) (l lf : list X),
+  filter test l = x :: lf ->
+  test x = true.
+Proof.
+  intros X test x l lf.
+  destruct l as [| x'].
+  + simpl. intros H. discriminate H.
+  + induction (x' :: l).
+    - simpl. intros H. discriminate H.
+    - simpl. destruct (test x0) eqn:T.
+      * intros H. injection H as H. rewrite -> H in T. apply T.
+      * apply IHl0.
+Qed.
+
+Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool
+  := match l with
+     | [] => true
+     | x :: l' => if test x then forallb test l' else false
+     end.
+
+Example test_forallb_1 : forallb odd [1;3;5;7;9] = true.
+Proof. reflexivity. Qed.
+Example test_forallb_2 : forallb negb [false;false] = true.
+Proof. reflexivity. Qed.
+Example test_forallb_3 : forallb even [0;2;4;5] = false.
+Proof. reflexivity. Qed.
+Example test_forallb_4 : forallb (eqb 5) [] = true.
+Proof. reflexivity. Qed.
+
+Fixpoint existsb {X : Type} (test : X -> bool) (l : list X) : bool
+  := match l with
+     | [] => false
+     | x :: l' => if test x then true else existsb test l'
+     end.
+
+Example test_existsb_1 : existsb (eqb 5) [0;2;3;6] = false.
+Proof. reflexivity. Qed.
+Example test_existsb_2 : existsb (andb true) [true;true;false] = true.
+Proof. reflexivity. Qed.
+Example test_existsb_3 : existsb odd [1;0;0;0;0;3] = true.
+Proof. reflexivity. Qed.
+Example test_existsb_4 : existsb even [] = false.
+Proof. reflexivity. Qed.
+
+Definition existsb' {X : Type} (test : X -> bool) (l : list X) : bool
+  := negb (forallb (fun x => negb (test x)) l).
+
+Theorem existsb_existsb' : forall (X : Type) (test : X -> bool) (l : list X),
+  existsb test l = existsb' test l.
+Proof. intros X test.
+  induction l.
+  + reflexivity.
+  + simpl.
+    unfold existsb'.
+    destruct (test x) eqn:T.
+    - simpl. rewrite -> T. reflexivity.
+    - simpl. rewrite -> T. rewrite -> IHl. reflexivity.
+Qed.
