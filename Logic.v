@@ -2,23 +2,10 @@ Set Warnings "-notation-overridden".
 Require Nat.
 From LF Require Import Tactics.
 
-(* factual claims : propositions *)
-(* evidences of their truth : proofs *)
-(* equality propositions : e1 = e2 *)
-(* implications : P -> Q *)
-(* quantified propositions : forall x, P *)
-(* Coq is a Typed Language : every sensible expression has an associated type *)
-(* any statement we might try to prove in Coq has a type, namely Prop( the type of *propositions* ) *)
-
 Check (forall n m : nat, n + m = m + n) : Prop.
-
-(* Being a proposition is one thing; being provable is a different thing *)
-
 Check 2 = 2 : Prop.
 Check 3 = 2 : Prop.
 Check forall n : nat, n = 2 : Prop.
-
-(* propositions are first-class entities that can be manipulated in all the same ways as any of the other things in Coq's world. *)
 
 Definition plus_claim : Prop := 2 + 2 = 4.
 Check plus_claim : Prop.
@@ -27,7 +14,6 @@ Theorem plus_claim_is_true :
   plus_claim.
 Proof. reflexivity. Qed.
 
-(* parameterized propositions : functions that take arguments of some type and return a proposition *)
 Definition is_three (n : nat) : Prop :=
   n = 3.
 Check is_three : nat -> Prop.
@@ -40,15 +26,14 @@ Lemma succ_inj : injective S.
 Proof.
   intros x y H. injection H as H1. apply H1.
 Qed.
-(* n=m is syntactic sugar for `eq n m` *)
-(* = operator is a (binary) function that returns a Prop. *)
+
 Check @eq.
 
+(* ---------------- LOGICAL CONNECTIVES ---------------- *)
 
-(* LOGICAL CONNECTIVES *)
-
-(* Conjunction *)
+(* ------------------ CONJUNCTION ----------- *)
 (* logical and *)
+
 Example and_example : 3 + 4 = 7 /\ 2 * 2 = 4.
 Proof.
   split.
@@ -144,8 +129,7 @@ Qed.
 
 Check and.
 
-
-(* Disjunction *)
+(* ---------------- DISJUNCTION -----------------– *)
 (* logical or *)
 
 Check or.
@@ -193,7 +177,7 @@ Proof.
   - left. apply HQ.
 Qed.
 
-(* Falsehood and Negation *)
+(* --------------- FALSEHOOD AND NEGATION ------------- *)
 
 Definition not ( P : Prop) := P -> False.
 Check not : Prop -> Prop.
@@ -214,7 +198,6 @@ Proof.
   apply HnotP in HP.
   destruct HP.
 Qed.
-
 
 Notation " x <> y" := (~(x=y)) : type_scope.
 Theorem zero_not_one : 0 <> 1.
@@ -312,7 +295,8 @@ Proof.
   - reflexivity.
 Qed.
 
-(* Truth *)
+(* ----------- TRUTH ------------ *)
+
 Lemma True_is_true : True.
 Proof.
   apply I.
@@ -345,7 +329,7 @@ Proof.
   simpl in H. apply H.
 Qed.
 
-(* Logical Equivalence *)
+(* -------------- LOGICAL EQUIVALENCE ---------------- *)
 
 Theorem iff_sym : forall P Q : Prop,
   (P <-> Q ) -> ( Q <-> P).
@@ -419,7 +403,8 @@ Proof.
         -- apply HQ.
         -- apply HR.
 Qed.  
-    
+  
+(* --------------- SETOIDS AND LOGICAL EQUIVALENCE ---------------- *)
 
 From Stdlib Require Import Setoids.Setoid.
 
@@ -456,7 +441,7 @@ Proof.
 Qed.
 
 
-(* Existential Quantification *)
+(* ---------------- EXISTENTIAL QUANTIFICATION --------------- *)
 
 Definition Even x := exists n : nat, x = double n.
 Check Even.
@@ -525,8 +510,7 @@ Proof.
 Qed.   
 
 
-
-(* PROGRAMMING WITH PROPOSITIONS *)
+(* ------------------ PROGRAMMING WITH PROPOSITIONS -----------------  *)
 
 Fixpoint In { A : Type } ( x : A) (l : list A) : Prop :=
   match l with 
@@ -710,8 +694,6 @@ Proof.
   rewrite <- Hm.
   reflexivity.
 Qed.
-
-
 
 (* WORKING WITH DECIDABLE PROPERTIES *)
 
