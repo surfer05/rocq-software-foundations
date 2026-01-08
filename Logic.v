@@ -938,11 +938,18 @@ Qed.
 
 (* ----------------- THE LOGIC OF COQ -------------------------------- *)
 
-(* Functional Extensionality *)
+(* ----------- FUNCTIONAL EXTENSIONALITY ------------ *)
 
 Example function_equality_ex1 :
   (fun x => 3 + x) = ( fun x => (pred 4) + x).
 Proof. reflexivity. Qed.
+
+Example function_equality_ex2 :
+  (fun x => plus x 1) = (fun x => plus 1 x).
+Proof.
+  Fail reflexivity. Fail rewrite add_comm.
+  (* Stuck *)
+Abort.
 
 Axiom functional_extensionality : forall { X Y : Type} {f g : X -> Y},
   (forall (x : X), f x = g x) -> f = g.
@@ -952,6 +959,157 @@ Example function_equality_ex2 :
 Proof.
   apply functional_extensionality. intros x.
   apply add_comm.
+Qed.
+
+Fixpoint rev_append {X} (l1 l2 : list X) : list X :=
+  match l1 with
+  | [] => l2
+  | x :: l1' => rev_append l1' (x :: l2)
+  end.
+
+Definition tr_rev {X} (l : list X) : list X :=
+  rev_append l [].
+
+Lemma rev_append_nil : forall X (l1 l2 : list X), rev_append l1 l2 = rev_append l1 [] ++ l2.
+Proof.
+  intros X l1 l2.
+  generalize dependent l2.
+  induction l1.
+  - reflexivity.
+  - intros l2.
+    simpl.
+    rewrite -> IHl1. rewrite -> (IHl1 [x]). rewrite <- app_assoc. reflexivity.
+Qed.
+
+Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
+Proof.
+  intros X.
+  apply functional_extensionality.
+  intros l.
+  induction l.
+  + reflexivity.
+  + simpl. rewrite <- IHl. unfold tr_rev. simpl. apply rev_append_nil.
+Qed.
+
+
+Definition excluded_middle := forall P : Prop,
+  P \/ ~ P.
+
+Theorem restricted_excluded_middle : forall P b,
+  (P <-> b = true) -> P \/ ~ P.
+Proof.
+  intros P [] H.
+  - left. rewrite H. reflexivity.
+  - right. unfold not. rewrite H. intros contra. discriminate contra.
+Qed.
+
+Theorem restricted_excluded_middle_eq : forall (n m : nat),
+  n = m \/ n <> m.
+Proof.
+  intros n m.
+  apply (restricted_excluded_middle (n = m) (n =? m)).
+  symmetry.
+  apply eqb_eq.
+Qed.
+
+Theorem excluded_middle_irrefutable: forall (P : Prop),
+  ~ ~ (P \/ ~ P).
+Proof.
+  intros P. intros H. apply H. right. intros HP. apply H. left. apply HP.
+Qed.
+
+Theorem not_exists_dist :
+  excluded_middle ->
+  forall (X:Type) (P : X -> Prop),
+    ~ (exists x, ~ P x) -> (forall x, P x).
+Proof.
+  unfold excluded_middle.
+  intros Hem X P Hne.
+  intros x.
+  destruct (Hem (P x)) as [HPx | HnPx].
+  - (* HPx : P x *) apply HPx.
+  - (* HnPx : ~P x *) exfalso. apply Hne. exists x. apply HnPx.
+Qed.
+
+Definition peirce := forall P Q: Prop,
+  ((P -> Q) -> P) -> P.
+
+Definition double_negation_elimination := forall P:Prop,
+  ~~P -> P.
+
+Definition de_morgan_not_and_not := forall P Q:Prop,
+  ~(~P /\ ~Q) -> P \/ Q.
+
+Definition implies_to_or := forall P Q:Prop,
+  (P -> Q) -> (~P \/ Q).
+
+Definition consequentia_mirabilis := forall P:Prop,
+  (~P -> P) -> P.
+
+Theorem peirce_double_negation_elimination :
+  peirce -> double_negation_elimination.
+Proof.
+  unfold peirce.
+  unfold double_negation_elimination.
+  unfold not.
+  intros Hp P Hnnp.
+  apply Hp with (Q:=False).
+  intros Hnp. exfalso. apply Hnnp. apply Hnp.
+Qed.
+
+Theorem double_negation_elimination_de_morgan_not_and_not :
+  double_negation_elimination -> de_morgan_not_and_not.
+Proof.
+  unfold double_negation_elimination.
+  unfold de_morgan_not_and_not.
+  unfold not.
+  intros Hdne P Q HPQ.
+  apply Hdne. intros. apply HPQ. split.
+  + intros H'. apply or_intro_l with (B:=Q) in H'. apply H. apply H'.
+  + intros H'. apply or_intro_l with (B:=P) in H'. apply or_commut in H'. apply H. apply H'.
+Qed.
+
+Theorem de_morgan_not_and_not_implies_to_or :
+  de_morgan_not_and_not -> implies_to_or.
+Proof.
+  unfold de_morgan_not_and_not.
+  unfold implies_to_or.
+  intros Hdm P Q HPQ.
+  apply Hdm.
+  intros H. unfold not in H. destruct H as [HnnP HnQ].
+  apply HnnP. intros HP. apply HnQ. apply HPQ. apply HP.
+Qed.
+
+Theorem implies_to_or_excluded_middle :
+  implies_to_or -> excluded_middle.
+Proof.
+  unfold implies_to_or.
+  unfold excluded_middle.
+  intros Hi P.
+  apply or_commut. apply Hi. intros HP. apply HP.
+Qed.
+
+Theorem excluded_middle_consequentia_mirabilis :
+  excluded_middle -> consequentia_mirabilis.
+Proof.
+  unfold excluded_middle.
+  unfold consequentia_mirabilis.
+  intros Hem P HnPP.
+  destruct (Hem P).
+  - apply H.
+  - apply HnPP. apply H.
+Qed.
+
+Theorem consequentia_mirabilis_peirce :
+  consequentia_mirabilis -> peirce.
+Proof.
+  unfold consequentia_mirabilis.
+  unfold peirce.
+  intros Hcons P Q HPQ.
+  assert (HnPQ : ~P -> ~ (P -> Q)). { apply contrapositive. apply HPQ. }
+  apply Hcons. intros Hnp. exfalso. apply HnPQ.
+  - apply Hnp.
+  - intros. contradiction.
 Qed.
 
 Print Assumptions function_equality_ex2.
