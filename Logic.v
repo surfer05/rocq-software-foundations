@@ -440,7 +440,6 @@ Proof.
   reflexivity.
 Qed.
 
-
 (* ---------------- EXISTENTIAL QUANTIFICATION --------------- *)
 
 Definition Even x := exists n : nat, x = double n.
@@ -459,7 +458,6 @@ Proof.
   exists (2 + m).
   apply Hm. 
 Qed.
-
 
 (* "P holds for all x" implies "there is no x for which P does not hold." *)
 Theorem dist_not_exists : forall (X  : Type) ( P : X -> Prop),
@@ -658,7 +656,42 @@ Proof.
   apply H.
 Qed.
 
-(* APPLYING THEOREMS AS ARGUMENTS *)
+(* ------------------ APPLYING THEOREMS AS ARGUMENTS --------------- *)
+
+Check plus : nat -> nat -> nat.
+Check @rev : forall X, list X -> list X.
+
+Check add_comm        : forall n m : nat, n + m = m + n.
+Check plus_id_example : forall n m : nat, n = m -> n + n = m + m.
+
+Lemma add_comm3 :
+  forall x y z, x + (y + z) = (z + y) + x.
+Proof.
+  intros x y z.
+  rewrite add_comm.
+  rewrite add_comm.
+  (* We are back where we started... *)
+Abort.
+
+Lemma add_comm3_take2 :
+  forall x y z, x + (y + z) = (z + y) + x.
+Proof.
+  intros x y z.
+  rewrite add_comm.
+  assert (H : y + z = z + y).
+    { rewrite add_comm. reflexivity. }
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma add_comm3_take3 :
+  forall x y z, x + (y + z) = (z + y) + x.
+Proof.
+  intros x y z.
+  rewrite add_comm.
+  rewrite (add_comm y z).
+  reflexivity.
+Qed.
 
 Lemma add_comm3_take4 : 
   forall x y z, x + ( y + z) = (z + y) + x.
@@ -680,9 +713,39 @@ Lemma in_not_nil_42 :
   forall l : list nat, In 42 l -> l <> [].
 Proof.
   intros l H.
-  apply ( in_not_nil _ _ _ H).
+  Fail apply in_not_nil.
+Abort.
+
+Lemma in_not_nil_42_take2 :
+  forall l : list nat, In 42 l -> l <> [].
+Proof.
+  intros l H.
+  apply in_not_nil with (x := 42).
+  apply H.
 Qed.
 
+Lemma in_not_nil_42_take3 :
+  forall l : list nat, In 42 l -> l <> [].
+Proof.
+  intros l H.
+  apply in_not_nil in H.
+  apply H.
+Qed.
+
+Lemma in_not_nil_42_take4 :
+  forall l : list nat, In 42 l -> l <> [].
+Proof.
+  intros l H.
+  apply (in_not_nil nat 42).
+  apply H.
+Qed.
+
+Lemma in_not_nil_42_take5 :
+  forall l : list nat, In 42 l -> l <> [].
+Proof.
+  intros l H.
+  apply (in_not_nil _ _ _ H).
+Qed.
 Example lemma_application_ex :
   forall {n : nat} {ns : list nat},
           In n ( map ( fun m => m*0) ns) ->
@@ -695,7 +758,7 @@ Proof.
   reflexivity.
 Qed.
 
-(* WORKING WITH DECIDABLE PROPERTIES *)
+(* --------------- WORKING WITH DECIDABLE PROPERTIES ---------------- *)
 
 Example even_42_bool : even 42 = true.
 Proof. reflexivity. Qed.
@@ -725,7 +788,6 @@ Proof.
       rewrite even_S. rewrite Hev. simpl.
       rewrite Hk. simpl. reflexivity.
 Qed.
-
 
 Theorem even_bool_prop : forall n,
   even n = true <-> Even n.
@@ -761,7 +823,7 @@ Proof.
 Qed.
 
 Theorem eqb_eq : forall n1 n2 : nat,
-  n1 =? n2 = true <-> n1 = n2.
+  (n1 =? n2) = true <-> n1 = n2.
 Proof.
   intros n1 n2. split.
   - apply eqb_true.
@@ -797,40 +859,81 @@ Proof.
   reflexivity.
 Qed.
 
-(* ------------ SOME THEOREMS FROM THE SECTION REMAINS --------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
-(* ------------------------------------------------------------------- *)
+Theorem andb_true_iff : forall b1 b2 : bool, 
+  b1 && b2 = true <-> b1 = true /\ b2 = true.
+Proof.
+  intros b1 b2.
+  split.
+  + intros H. destruct b1.
+    - destruct b2.
+      split. reflexivity. reflexivity. discriminate H.
+    - destruct b2. discriminate H. discriminate H.
+  + intros [H1 H2]. rewrite H1. rewrite H2. reflexivity.
+Qed.
 
-(* Pending theorems to prove  *)
-(* andb_true_iff *)
+
 Theorem orb_true_iff : forall b1 b2,
   b1 || b2 = true <-> b1 = true \/ b2 = true.
 Proof.
   intros b1 b2.
   split.
   + intros H.
-    destruct b1. left. reflexivity. destruct b2. right. reflexivity. discriminate H.
-  + intros [H1 | H2]. rewrite H1. reflexivity. rewrite H2. destruct b1. reflexivity. reflexivity.
+    destruct b1. left. reflexivity. destruct b2. 
+    right. reflexivity. discriminate H.
+  + intros [H1 | H2]. rewrite H1. reflexivity. 
+    rewrite H2. destruct b1. reflexivity. reflexivity.
 Qed.
-(* eqb_neq *)
 
-
-(* Fixpoint eqb_list *)
-(* eqb_list_true_iff *)
-
-
-Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-Theorem forallb_true_iff : forall X test (l : list X),
-  forallb test l = true <-> All (fun x => test x = true) l.
+Theorem eqb_neq : forall x y : nat,
+  x =? y = false <-> x <> y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros x y.
+  split.
+  + intros H.
+    destruct (x =? y) eqn:H1.
+    - discriminate H.
+    - intros contra.
+      rewrite <- eqb_eq in contra. rewrite H1 in contra. discriminate contra.
+  + intros H.
+    destruct (x =? y) eqn:H1.
+    - rewrite  eqb_eq in H1. apply H in H1. destruct H1.
+    - reflexivity.
+Qed.
 
+Fixpoint eqb_list {A : Type} (eqb : A -> A -> bool)
+                  (l1 l2 : list A) : bool
+  := match l1, l2 with
+     | [], [] => true
+     | _, [] => false
+     | [], _ => false
+     | (x1 :: l1'), (x2 :: l2') => eqb x1 x2 && eqb_list eqb l1' l2'
+     end.
+
+Theorem eqb_list_true_iff :
+  forall A (eqb : A -> A -> bool),
+    (forall a1 a2, eqb a1 a2 = true <-> a1 = a2) ->
+    forall l1 l2, eqb_list eqb l1 l2 = true <-> l1 = l2.
+Proof.
+  intros A eqb.
+  intros H.
+  split.
+  - (* -> *)
+    generalize dependent l2.
+    induction l1.
+    + destruct l2. reflexivity. discriminate.
+    + destruct l2. discriminate.
+      simpl.
+      intros H'. rewrite andb_true_iff in H'. destruct H'.
+      rewrite H in H0. apply IHl1 in H1. rewrite H0. rewrite H1. reflexivity.
+  - (* <- *)
+    generalize dependent l2.
+    induction l1.
+    + intros l2. intros H2. rewrite <- H2. reflexivity.
+    + destruct l2. discriminate.
+      simpl. intros H'. injection H' as Hx Hl. rewrite andb_true_iff. split.
+      { rewrite Hx. rewrite H. reflexivity. }
+      { apply IHl1. apply Hl. }
+Qed.
 
 
 (* ----------------- THE LOGIC OF COQ -------------------------------- *)
