@@ -992,6 +992,8 @@ Proof.
 Qed.
 
 
+(* ------------- CLASSICAL VS CONSTRUCTIVE LOGIC --------------- *)
+
 Definition excluded_middle := forall P : Prop,
   P \/ ~ P.
 
@@ -1112,4 +1114,4 @@ Proof.
   - intros. contradiction.
 Qed.
 
-Print Assumptions function_equality_ex2.
+
