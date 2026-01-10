@@ -370,15 +370,22 @@ Proof.
   - simpl in H. inversion H. apply IHev in H2. apply H2.
 Qed.
 
-
-(* TODO - 1 *)
-(* Theorem ev_plus_plus : forall n m p,
+Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
-  intros.
-  apply ev_ev_ev with (n+n).
-  - assert (ev ((n+m)+(n+p))) as H1. { apply ev_sum. apply H. apply H0. }
-   *)
+  intros n m p Enm Enp.
+  apply ev_ev__ev with (n + n).
+  - assert (ev ((n + m) + (n + p))) as H.
+    { apply ev_sum. apply Enm. apply Enp. }
+    rewrite add_comm with n m in H.
+    rewrite <- add_assoc with m n (n + p) in H.
+    rewrite add_assoc with n n p in H.
+    rewrite add_comm with (n + n) p in H.
+    rewrite add_assoc with m p (n + n) in H.
+    rewrite add_comm with (m + p) (n + n) in H.
+    apply H.
+  - rewrite <- double_plus. apply ev_double.
+Qed.
 
 Inductive ev' : nat -> Prop :=
   | ev'_0 : ev' 0
