@@ -432,10 +432,58 @@ Proof.
     * apply IH12.
 Qed.
   
-(* TODO-2 *)
-(* Perm3_In, Perm3_NotIn, Perm3_example2 *)
+Lemma Perm3_In : forall (X : Type) (x : X) (l1 l2 : list X),
+    Perm3 l1 l2 -> In x l1 -> In x l2.
+Proof.
+  intros X x l1 l2 HPerm HIn.
+  induction HPerm.
+  - simpl.
+    destruct HIn as [E|HIn'].
+    + right. left. apply E.
+    + inversion HIn' as [E|HIn''].
+      * left. apply E.
+      * inversion HIn'' as [E|contra].
+        ** right. right. left. apply E.
+        ** destruct contra.
+  - simpl.
+    destruct HIn as [E|HIn'].
+    + left. apply E.
+    + inversion HIn' as [E|HIn''].
+      * right. right. left. apply E.
+      * inversion HIn'' as [E|contra].
+        ** right. left. apply E.
+        ** destruct contra.
+  - simpl.
+    apply IHHPerm2. apply IHHPerm1. apply HIn.
+Qed.
+(** [] *)
 
+(** **** Exercise: 1 star, standard, optional (Perm3_NotIn) *)
+Lemma Perm3_NotIn : forall (X : Type) (x : X) (l1 l2 : list X),
+    Perm3 l1 l2 -> ~In x l1 -> ~In x l2.
+Proof.
+  intros X x l1 l2 HPerm HNotIn contra.
+  apply HNotIn.
+  apply Perm3_In with (l1:=l2).
+  - apply Perm3_symm. apply HPerm.
+  - apply contra.
+Qed.
+(** [] *)
 
+(** **** Exercise: 2 stars, standard, optional (NotPerm3)
+
+    Proving that something is NOT a permutation is quite tricky. Some
+    of the lemmas above, like [Perm3_In] can be useful for this. *)
+Example Perm3_example2 : ~ Perm3 [1;2;3] [1;2;4].
+Proof.
+  intros contra.
+  assert (H: In 3 [1;2;4]).
+  { apply Perm3_In with (l1:=[1;2;3]). apply contra. simpl. right. right. left. reflexivity. }
+  destruct H as [|H1]. discriminate.
+  destruct H1 as [|H2]. discriminate.
+  destruct H2 as [|H3]. discriminate.
+  destruct H3.
+Qed.
 (* EXERCISING WITH INDUCTIVE RELATIONS *)
 
 Module Playground.
