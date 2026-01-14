@@ -995,7 +995,7 @@ Fixpoint re_not_empty {T : Type} (re : reg_exp T) : bool :=
   | Star _ => true
   end.
 
-  Theorem andb_true_iff : forall b1 b2:bool,
+Theorem andb_true_iff : forall b1 b2:bool,
   b1 && b2 = true <-> b1 = true /\ b2 = true.
 Proof.
   intros b1 b2.
@@ -1060,7 +1060,6 @@ Proof.
   - simpl. intros H. apply H.
   - intros H. simpl.
 Abort.
-
 
 Lemma star_app: forall T (s1 s2 : list T) (re re' : reg_exp T),
   re' = Star re ->
@@ -1155,6 +1154,16 @@ Module Pumping.
     - simpl. apply IHre.
   Qed.
 
+  Lemma pumping_constant_0_false : 
+    forall T (re : reg_exp T), 
+      pumping_constant re = 0 -> False.
+  Proof. 
+    intros T re H.
+    assert (Hp1 : pumping_constant re >= 1).
+    { apply pumping_constant_ge_1. }
+    rewrite H in Hp1. inversion Hp1.
+  Qed.
+
   Fixpoint napp {T} (n : nat) (l : list T) : list T :=
     match n with 
      | 0 => []
@@ -1202,7 +1211,6 @@ Module Pumping.
     - (* MEmpty *)
       simpl. intros contra. inversion contra.
     (* FILL IN HERE *) Admitted.
-
 
   Lemma pumping : forall T (re : reg_exp T) s,
     s =~ re ->
