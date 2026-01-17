@@ -307,6 +307,18 @@ Module EqualityPlayground.
     destruct H. apply H0.
   Qed.
 
+  Definition equality__leibniz_equality_term : forall (X : Type) (x y: X),
+    x == y -> forall P : (X -> Prop), P x -> P y
+  := fun X x y Heq =>
+       match Heq with
+       | eq_refl x => fun P H => H
+       end.
+
+  Lemma leibniz_equality__equality : forall (X : Type) (x y: X),
+    (forall P:X->Prop, P x -> P y) -> x == y.
+  Proof.
+    intros. apply H. apply eq_refl. Qed.
+
 End EqualityPlayground.
 
 (* ROCQ'S TRUSTED COMPUTING BASE *)
@@ -389,6 +401,11 @@ Proof.
   - intros. apply or_commut. apply H0.
   - intros. apply or_commut. apply H0.
 Qed.
+
+Theorem pe_implies_true_eq :
+  propositional_extensionality ->
+  forall (P : Prop), P -> True = P.
+Proof. intros PE P HP. apply PE. split. intros. apply HP. intros. apply I. Qed.
 
 Definition proof_irrelevance : Prop :=
   forall (P : Prop) (pf1 pf2 : P), pf1 = pf2.
