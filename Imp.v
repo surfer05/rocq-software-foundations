@@ -172,7 +172,6 @@ Proof.
   (* repeat rewrite Nat.add_comm. *)
 Admitted.
 
-
 Fixpoint optimize_0plus_b (b : bexp) : bexp :=
   match b with 
   | BTrue      => BTrue
@@ -242,7 +241,6 @@ Fixpoint optimize ( a : aexp) : aexp :=
       end 
   end.
 
-(* TODO - COME BACK LATER *)
 Theorem optimize_sound : forall a,
   aeval (optimize a) = aeval a.
 Proof.
