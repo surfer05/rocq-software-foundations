@@ -62,10 +62,6 @@ Fixpoint optimize_0plus (a : aexp) : aexp :=
   | AMult e1 e2 => AMult (optimize_0plus e1)(optimize_0plus e2)
   end.
 
-(** To gain confidence that our optimization is doing the right
-    thing we can test it on some examples and see if the output looks
-    OK. *)
-
 Example test_optimize_0plus : 
   optimize_0plus (APlus (ANum 2)
                         (APlus (ANum 0)
@@ -88,6 +84,8 @@ Proof.
   - simpl. rewrite IHa1. rewrite IHa2. reflexivity.
   - simpl. rewrite IHa1. rewrite IHa2. reflexivity.
 Qed.
+
+(* ROCQ AUTOMATION *)
 
 Theorem silly1 :forall (P : Prop), P -> P.
 Proof.
@@ -1327,6 +1325,7 @@ Proof.
 Qed.
 
 End BreakImp.
+
 (* Module ForImp.
 
 Inductive com : Type :=
