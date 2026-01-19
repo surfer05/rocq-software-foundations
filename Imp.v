@@ -652,35 +652,9 @@ Definition fact_in_coq : com :=
       end }>.
 Print fact_in_coq.
 
-
-(* ================================================================= *)
-(** ** Desugaring Notations *)
-
-(** Coq offers a rich set of features to manage the increasing
-    complexity of the objects we work with, such as coercions and
-    notations. However, their heavy usage can make it hard to
-    understand what the expressions we enter actually mean. In such
-    situations it is often instructive to "turn off" those features to
-    get a more elementary picture of things, using the following
-    commands:
-
-    - [Unset Printing Notations] (undo with [Set Printing Notations])
-    - [Set Printing Coercions] (undo with [Unset Printing Coercions])
-    - [Set Printing All] (undo with [Unset Printing All])
-
-    These commands can also be used in the middle of a proof, to
-    elaborate the current goal and context. *)
-
 Unset Printing Notations.
 Print fact_in_coq.
-(* ===>
-   fact_in_coq =
-   CSeq (CAsgn Z X)
-        (CSeq (CAsgn Y (S O))
-              (CWhile (BNot (BEq Z O))
-                      (CSeq (CAsgn Y (AMult Y Z))
-                            (CAsgn Z (AMinus Z (S O))))))
-        : com *)
+
 Set Printing Notations.
 
 Print example_bexp.
@@ -691,63 +665,18 @@ Print example_bexp.
 (* ===> example_bexp = <{(true && ~ (AId X <= ANum 4))}> *)
 
 Print fact_in_coq.
-(* ===>
-  fact_in_coq =
-  <{ Z := (AId X);
-     Y := (ANum 1);
-     while ~ (AId Z) = (ANum 0) do
-       Y := (AId Y) * (AId Z);
-       Z := (AId Z) - (ANum 1)
-     end }>
-       : com *)
+
 Unset Printing Coercions.
 
-(* ================================================================= *)
-(** ** [Locate] Again *)
 
-(* ----------------------------------------------------------------- *)
-(** *** Finding identifiers *)
-
-(** When used with an identifier, the [Locate] prints the full path to
-    every value in scope with the same name.  This is useful to
-    troubleshoot problems due to variable shadowing. *)
 Locate aexp.
-(* ===>
-     Inductive LF.Imp.aexp
-     Inductive LF.Imp.AExp.aexp
-       (shorter name to refer to it in current context is AExp.aexp)
-     Inductive LF.Imp.aevalR_division.aexp
-       (shorter name to refer to it in current context is aevalR_division.aexp)
-     Inductive LF.Imp.aevalR_extended.aexp
-       (shorter name to refer to it in current context is aevalR_extended.aexp)
-*)
-(* ----------------------------------------------------------------- *)
-(** *** Finding notations *)
 
-(** When faced with an unknown notation, you can use [Locate] with a
-    string containing one of its symbols to see its possible
-    interpretations. *)
 Locate "&&".
-(* ===>
-    Notation
-      "x && y" := BAnd x y (default interpretation)
-      "x && y" := andb x y : bool_scope (default interpretation)
-*)
+
 Locate ";".
-(* ===>
-    Notation
-      "x '|->' v ';' m" := update m x v (default interpretation)
-      "x ; y" := CSeq x y : com_scope (default interpretation)
-      "x '!->' v ';' m" := t_update m x v (default interpretation)
-      "[ x ; y ; .. ; z ]" := cons x (cons y .. (cons z nil) ..) : list_scope
-      (default interpretation) *)
 
 Locate "while".
-(* ===>
-    Notation
-      "'while' x 'do' y 'end'" :=
-          CWhile x y : com_scope (default interpretation)
-*)
+
 
 (* ================================================================= *)
 (** ** More Examples *)
@@ -1324,7 +1253,7 @@ Qed.
 
 End BreakImp.
 
-(* Module ForImp.
+Module ForImp.
 
 Inductive com : Type :=
   | CSkip
@@ -1442,4 +1371,4 @@ Proof.
     * subst. apply IHE1_2. assumption.
 Qed.
 
-End ForImp. *)
+End ForImp.
