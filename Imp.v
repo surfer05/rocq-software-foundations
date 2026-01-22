@@ -875,6 +875,9 @@ Proof.
     rewrite (IHE1_1 st'0 H3) in *.
     apply IHE1_2. assumption.  Qed.
 
+
+(* REASONING ABOUT IMP PROGRAMS *)
+
 Theorem plus2_spec : forall st n st',
   st X = n ->
   st =[ plus2 ]=> st' ->
@@ -954,7 +957,6 @@ Proof.
       split;
       assumption.
 Qed.
-
 
 Theorem no_whiles_terminating :
   forall c, no_whilesR c -> forall st, exists st', st =[ c ]=> st'.

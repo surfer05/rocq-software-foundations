@@ -1846,3 +1846,5 @@ Qed.
       + apply ReflectF. intros contra. apply Hfalse. apply (derive_corr a re s). apply contra.
   Qed.
   
+
+End Playground.
