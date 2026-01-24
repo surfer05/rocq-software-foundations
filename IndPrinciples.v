@@ -1,7 +1,7 @@
 (** * IndPrinciples: Induction Principles *)
+
 Set Warnings "-notation-overridden".
 From LF Require Export ProofObjects.
-
 
 Check nat_ind :
   forall P : nat -> Prop,
